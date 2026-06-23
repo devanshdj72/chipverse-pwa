@@ -99,6 +99,7 @@ export default function Navbar() {
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/battlefield", label: "⚔️ Battle" },
     { href: "/placement",   label: "Placement" },
+    { href: "/subscription", label: "⚡ Plans" },
   ] : [];
 
   const handleLogout = async () => { await logout(); setIsOpen(false); setLocation("/login"); };

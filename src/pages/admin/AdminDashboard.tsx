@@ -257,6 +257,10 @@ export default function AdminDashboard() {
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <span style={{ color: "#666", fontSize: "12px" }}>👋 {admin?.name}</span>
+            <button onClick={() => navigate("/admin/subscription")}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 transition-all">
+              ⚡ Pricing
+            </button>
             <button onClick={() => navigate("/admin/resources")}
               style={{ padding: "7px 16px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "8px", color: "#f59e0b", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "'DM Mono',monospace" }}>
               Manage Resources

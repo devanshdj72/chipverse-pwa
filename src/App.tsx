@@ -17,6 +17,8 @@ import EmbeddedPath from "@/pages/paths/EmbeddedPath";
 import DFTPath from "@/pages/paths/DFTPath";
 import ResearchPath from "@/pages/paths/ResearchPath";
 import NotFound from "@/pages/not-found";
+import Subscription from "@/pages/Subscription";
+import AdminSubscription from "@/pages/admin/AdminSubscription";
 import Navbar from "@/components/Navbar";
 import Achievements from "@/pages/Achievements";
 import Placement from "@/pages/Placement";
@@ -67,6 +69,8 @@ export default function App() {
           <Route path="/admin/login"              component={AdminLogin} />
           <Route path="/admin/dashboard"          component={AdminDashboard} />
           <Route path="/admin/resources"          component={AdminResources} />
+          <Route path="/subscription"          component={Subscription} />
+          <Route path="/admin/subscription"     component={AdminSubscription} />
           <Route component={NotFound} />
         </Switch>
       </main>

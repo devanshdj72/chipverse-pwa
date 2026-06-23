@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useSubscription } from "@/hooks/useSubscription";
+import Paywall from "@/components/Paywall";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Check, Play, ChevronRight, Star, FileText } from "lucide-react";
 import { useUserContext } from "@/lib/user";
@@ -38,6 +40,8 @@ function saveProgress(p: FPGAProgress) {
 }
 
 export default function FPGAPath() {
+
+  const { isSubscribed, isLoading: subLoading, price } = useSubscription("fpga");
   const { profile, completeLevel, addXp } = useUserContext();
   const theme = DOMAIN_THEMES[DOMAIN_ID];
   const levels = ROADMAPS[DOMAIN_ID] || [];
@@ -89,6 +93,21 @@ export default function FPGAPath() {
   const overallProgress = Math.round(((completedIds.length + progress.completedLevels.length) / levels.length) * 100);
   const activeLevel = activeLevelIdx !== null ? levels[activeLevelIdx] : null;
   const activeLevelData = activeLevelIdx !== null ? fpgaSubLevels.find(d => d.levelId === levels[activeLevelIdx].id) : null;
+
+
+  // ── Paywall gate: Level 1 is free, rest needs subscription ──────────────────
+  const highestCompletedLevel = Math.max(-1, ...(progress.completedLevels ?? []));
+  if (!subLoading && !isSubscribed && highestCompletedLevel >= 1) {
+    return (
+      <Paywall
+        domainId="fpga"
+        domainName="FPGA Design"
+        domainColor="#10b981"
+        price={price}
+      />
+    );
+  }
+
 
   return (
     <div className="min-h-screen pt-16 relative bg-black overflow-x-hidden">

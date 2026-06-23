@@ -119,6 +119,21 @@ export const api = {
     getShared: (shareToken: string) =>
       request<any>('GET', `/report/share/${shareToken}`),
   },
+  subscription: {
+    getPricing: () => request<{ domainPrices: any[]; bundles: any[] }>('GET', '/subscription/pricing'),
+    getMy: () => request<any[]>('GET', '/subscription/my'),
+    createOrder: (domainIds: string[]) => request<any>('POST', '/subscription/create-order', { domainIds }),
+    verify: (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) =>
+      request<any>('POST', '/subscription/verify', data),
+    check: (domainId: string) => request<{ isActive: boolean }>('GET', `/subscription/check/${domainId}`),
+    // Admin
+    adminGetPricing: () => request<any>('GET', '/subscription/admin/pricing'),
+    adminSetDomainPrice: (domainId: string, price: number) =>
+      request<any>('PUT', '/subscription/admin/pricing/domain', { domainId, price }),
+    adminSetBundleDiscount: (domainCount: number, discount: number, label: string) =>
+      request<any>('PUT', '/subscription/admin/pricing/bundle', { domainCount, discount, label }),
+    adminGetPayments: () => request<any[]>('GET', '/subscription/admin/payments'),
+  },
 };
 
 export default api;
