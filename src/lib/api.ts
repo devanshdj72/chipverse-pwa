@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL ?? 'https://chipverse-backend.onrender.com/api';
 
 let _accessToken: string | null = null;
 export const setAccessToken = (token: string) => { _accessToken = token; };
