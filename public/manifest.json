@@ -1,9 +1,9 @@
 {
   "name": "ChipVerse",
   "short_name": "ChipVerse",
-  "description": "Your guide to electronics, VLSI & semiconductor technology. Learn RTL, FPGA, Physical Design and more.",
-  "start_url": "/",
-  "scope": "/",
+  "description": "Your guide to electronics, VLSI & semiconductor technology.",
+  "start_url": "/chipverse-pwa/",
+  "scope": "/chipverse-pwa/",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#FF3C00",
@@ -12,35 +12,34 @@
   "categories": ["education", "technology"],
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/chipverse-pwa/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/chipverse-pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/chipverse-pwa/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Go to your learning dashboard",
-      "url": "/dashboard"
+      "url": "/chipverse-pwa/dashboard"
     },
     {
       "name": "Domains",
       "short_name": "Domains",
       "description": "Browse learning domains",
-      "url": "/domains"
+      "url": "/chipverse-pwa/domains"
     }
   ]
 }
