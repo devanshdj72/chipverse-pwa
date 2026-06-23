@@ -405,9 +405,9 @@ function LoginForm({ onSuccess }: { onSuccess: (name: string) => void }) {
 
   const handleSocial = (name: string) => {
     if (name === "Google") {
-      window.location.href = `https://chipverse-production.up.railway.app/api/auth/google`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
-      window.location.href = `https://chipverse-production.up.railway.app/api/auth/linkedin`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setToast("OTP login coming soon…");
       setTimeout(() => setToast(""), 2500);
@@ -510,9 +510,9 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
 
   const handleSocial = (name: string) => {
     if (name === "Google") {
-      window.location.href = `https://chipverse-production.up.railway.app/api/auth/google`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
-      window.location.href = `https://chipverse-production.up.railway.app/api/auth/linkedin`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setToast("OTP login coming soon…");
       setTimeout(() => setToast(""), 2500);

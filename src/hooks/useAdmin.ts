@@ -4,7 +4,7 @@ import { useState } from "react";
 const ADMIN_TOKEN_KEY = "chipverse_admin_token";
 const ADMIN_INFO_KEY = "chipverse_admin_info";
 
-export const API_BASE = "https://chipverse-production.up.railway.app";
+export const API_BASE = "https://chipverse-backend.onrender.com";
 
 export type AdminInfo = {
   id: string;
