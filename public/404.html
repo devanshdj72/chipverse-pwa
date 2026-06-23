@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ChipVerse</title>
+    <script>
+      // GitHub Pages SPA redirect trick
+      // Saves the path and redirects to index.html
+      var path = window.location.pathname;
+      var base = '/chipverse-pwa';
+      var route = path.replace(base, '') || '/';
+      sessionStorage.setItem('redirect', route + window.location.search);
+      window.location.replace(base + '/');
+    </script>
+  </head>
+  <body></body>
+</html>
