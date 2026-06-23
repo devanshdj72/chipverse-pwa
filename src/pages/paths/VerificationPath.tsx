@@ -146,7 +146,7 @@ export default function VerificationPath() {
               </div>
             </div>
             <a
-              href="/report/verification"
+              href={`${import.meta.env.BASE_URL}report/verification`}
               className="flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm transition-all hover:opacity-90 active:scale-95"
               style={{ background: theme.gradient, color: '#000', textDecoration: 'none', boxShadow: `0 0 20px ${theme.glow}55` }}
             >
@@ -285,7 +285,7 @@ export default function VerificationPath() {
                 View your full skill breakdown, radar chart, and badges — shareable + downloadable as PDF.
               </p>
               <a
-                href="/report/verification"
+                href={`${import.meta.env.BASE_URL}report/verification`}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "9px 16px", borderRadius: "10px", background: theme.gradient, color: "#000", fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 700, textDecoration: "none", boxShadow: `0 0 14px ${theme.glow}55` }}
               >
                 <FileText style={{ width: "13px", height: "13px" }} />

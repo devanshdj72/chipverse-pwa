@@ -141,7 +141,7 @@ export default function PhysicalDesignPath() {
               <div className="text-gray-400 text-sm mb-2 uppercase tracking-wider">Sub-levels</div>
               <div className="text-xl font-bold mt-2" style={{ color: theme.primary }}>{progress.completedSubLevels.length}/{levels.length * 7}</div>
             </div>
-            <a href="/report/physical-design" className="flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm transition-all hover:opacity-90 active:scale-95"
+            <a href={`${import.meta.env.BASE_URL}report/physical-design`} className="flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm transition-all hover:opacity-90 active:scale-95"
               style={{ background: theme.gradient, color: '#000', textDecoration: 'none', boxShadow: `0 0 20px ${theme.glow}55` }}>
               <FileText style={{ width: "16px", height: "16px" }} />
               View Skill Report
@@ -286,7 +286,7 @@ export default function PhysicalDesignPath() {
               <p style={{ color: "#888", fontSize: "11px", fontFamily: "'DM Mono', monospace", lineHeight: 1.6 }}>
                 View your full skill breakdown, radar chart, and badges — shareable + downloadable as PDF.
               </p>
-              <a href="/report/physical-design" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "9px 16px", borderRadius: "10px", background: theme.gradient, color: "#000", fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 700, textDecoration: "none", boxShadow: `0 0 14px ${theme.glow}55` }}>
+              <a href={`${import.meta.env.BASE_URL}report/physical-design`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "9px 16px", borderRadius: "10px", background: theme.gradient, color: "#000", fontFamily: "'DM Mono', monospace", fontSize: "11px", fontWeight: 700, textDecoration: "none", boxShadow: `0 0 14px ${theme.glow}55` }}>
                 <FileText style={{ width: "13px", height: "13px" }} />
                 View My Report →
               </a>

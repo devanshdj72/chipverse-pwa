@@ -17,10 +17,13 @@ export default function Odyssey() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  // Use import.meta.env.BASE_URL so it works on both Vercel (/) and GitHub Pages (/chipverse-pwa/)
+  const odysseySrc = `${import.meta.env.BASE_URL}vlsi-odyssey.html`;
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#000" }}>
       <iframe
-        src="/vlsi-odyssey.html"
+        src={odysseySrc}
         style={{ width: "100%", height: "100%", border: "none" }}
         title="VLSI Odyssey"
         allow="autoplay"
