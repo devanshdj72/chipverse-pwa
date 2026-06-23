@@ -7,6 +7,7 @@ export default function Odyssey() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
+    // Listen for postMessage from the iframe when user clicks Continue
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === "odyssey_complete") {
         localStorage.setItem(ODYSSEY_KEY, "true");
@@ -15,9 +16,19 @@ export default function Odyssey() {
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [setLocation]);
 
-  // Use import.meta.env.BASE_URL so it works on both Vercel (/) and GitHub Pages (/chipverse-pwa/)
+  // Also poll localStorage in case postMessage doesn't fire (fallback)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (localStorage.getItem(ODYSSEY_KEY)) {
+        clearInterval(interval);
+        setLocation("/domains");
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [setLocation]);
+
   const odysseySrc = `${import.meta.env.BASE_URL}vlsi-odyssey.html`;
 
   return (

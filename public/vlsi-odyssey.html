@@ -2389,7 +2389,14 @@ function ctaClick(){
 
   setTimeout(() => {
     localStorage.setItem('chipverse_odyssey_seen', '1');
-    window.location.href = '/domains';
+    // Notify parent React app to handle navigation (works in iframe)
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'odyssey_complete' }, '*');
+    } else {
+      // Fallback: direct navigation
+      const base = window.location.pathname.includes('/chipverse-pwa') ? '/chipverse-pwa' : '';
+      window.location.href = base + '/domains';
+    }
   }, 3500);
 }
 

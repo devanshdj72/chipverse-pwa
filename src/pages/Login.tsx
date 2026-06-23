@@ -405,9 +405,9 @@ function LoginForm({ onSuccess }: { onSuccess: (name: string) => void }) {
 
   const handleSocial = (name: string) => {
     if (name === "Google") {
-      window.location.href = `http://localhost:5000/api/auth/google`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
-      window.location.href = `http://localhost:5000/api/auth/linkedin`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setToast("OTP login coming soon…");
       setTimeout(() => setToast(""), 2500);
@@ -510,9 +510,9 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
 
   const handleSocial = (name: string) => {
     if (name === "Google") {
-      window.location.href = `http://localhost:5000/api/auth/google`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
-      window.location.href = `http://localhost:5000/api/auth/linkedin`;
+      window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setToast("OTP login coming soon…");
       setTimeout(() => setToast(""), 2500);
@@ -709,7 +709,10 @@ export default function Login() {
 
   const handleSuccess = (name: string) => {
     setName(name);
-    setLocation("/dashboard");
+    // New user (never seen odyssey) → show odyssey first
+    // Returning user → go straight to dashboard
+    const odysseySeen = localStorage.getItem('chipverse_odyssey_seen');
+    setLocation(odysseySeen ? '/dashboard' : '/odyssey');
   };
 
   return (
