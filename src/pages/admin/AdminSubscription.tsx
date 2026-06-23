@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
+import { useSubscriptionConfig } from "@/lib/SubscriptionConfig";
 import { DOMAIN_LIST } from "@/lib/data";
 import { useAdmin } from "@/hooks/useAdmin";
 
@@ -18,6 +19,19 @@ const DEFAULT_BUNDLES = [
 export default function AdminSubscription() {
   const { admin } = useAdmin();
   const isSuperAdmin = admin?.adminRole === "SUPER_ADMIN";
+  const { subscriptionEnabled, refetch: refetchConfig } = useSubscriptionConfig();
+  const [toggling, setToggling] = useState(false);
+
+  const toggleSubscription = async () => {
+    if (!isSuperAdmin) return;
+    setToggling(true);
+    try {
+      await api.subscription.adminSetConfig(!subscriptionEnabled);
+      refetchConfig();
+      showToast((!subscriptionEnabled ? "✅ Subscription system ENABLED" : "⚠️ Subscription system DISABLED — all access granted"));
+    } catch { showToast("❌ Failed to update"); }
+    setToggling(false);
+  };
 
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [bundles, setBundles] = useState(DEFAULT_BUNDLES);
@@ -91,6 +105,34 @@ export default function AdminSubscription() {
           <p className="text-gray-500 text-sm">
             {isSuperAdmin ? "Super Admin — full pricing control" : "Admin — view only"}
           </p>
+        </div>
+
+        {/* ── Master Toggle ────────────────────────────────────────────────── */}
+        <div className={`rounded-2xl border p-5 mb-8 flex items-center justify-between gap-4
+          ${subscriptionEnabled
+            ? "border-orange-500/40 bg-orange-500/8"
+            : "border-emerald-500/40 bg-emerald-500/8"}`}>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`w-2.5 h-2.5 rounded-full ${subscriptionEnabled ? "bg-orange-400 animate-pulse" : "bg-emerald-400"}`} />
+              <span className="text-white font-bold font-['Orbitron'] text-sm">
+                Subscription System — {subscriptionEnabled ? "ACTIVE" : "INACTIVE (Free Access Mode)"}
+              </span>
+            </div>
+            <p className="text-gray-500 text-xs">
+              {subscriptionEnabled
+                ? "Paywalls are active. Users must subscribe after Level 1 to continue."
+                : "All users have full free access. Paywalls are hidden everywhere."}
+            </p>
+          </div>
+          {isSuperAdmin && (
+            <button onClick={toggleSubscription} disabled={toggling}
+              className={`relative w-14 h-7 rounded-full transition-all duration-300 shrink-0 disabled:opacity-60
+                ${subscriptionEnabled ? "bg-orange-500" : "bg-white/15"}`}>
+              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all duration-300
+                ${subscriptionEnabled ? "left-8" : "left-1"}`} />
+            </button>
+          )}
         </div>
 
         {/* Revenue Stats */}

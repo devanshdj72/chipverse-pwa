@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import api from "@/lib/api";
 import { DOMAIN_LIST } from "@/lib/data";
 import CircuitBackground from "@/components/CircuitBackground";
+import { useSubscriptionConfig } from "@/lib/SubscriptionConfig";
 
 // ─── Domain icon colours (matching existing palette) ─────────────────────────
 const DOMAIN_COLORS: Record<string, string> = {
@@ -23,6 +24,7 @@ declare global { interface Window { Razorpay: any } }
 
 export default function Subscription() {
   const [, setLocation] = useLocation();
+  const { subscriptionEnabled } = useSubscriptionConfig();
   const [pricing, setPricing] = useState<{ domainPrices: DomainPrice[]; bundles: BundleDeal[] }>({ domainPrices: [], bundles: [] });
   const [subscribed, setSubscribed] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -128,6 +130,14 @@ export default function Subscription() {
   return (
     <div className="min-h-screen bg-black pt-24 pb-32 px-4 relative overflow-hidden">
       <CircuitBackground />
+
+      {/* Free access banner when subscription is disabled */}
+      {!subscriptionEnabled && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-emerald-500/15 border border-emerald-500/40
+          text-emerald-300 text-sm px-6 py-2.5 rounded-full shadow-lg backdrop-blur-md whitespace-nowrap">
+          🎉 Free Access Mode — All domains unlocked by admin. No payment needed right now!
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (

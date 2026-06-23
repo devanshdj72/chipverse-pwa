@@ -133,6 +133,8 @@ export const api = {
     adminSetBundleDiscount: (domainCount: number, discount: number, label: string) =>
       request<any>('PUT', '/subscription/admin/pricing/bundle', { domainCount, discount, label }),
     adminGetPayments: () => request<any[]>('GET', '/subscription/admin/payments'),
+    getConfig: () => request<{ subscriptionEnabled: boolean }>('GET', '/subscription/config'),
+    adminSetConfig: (subscriptionEnabled: boolean) => request<any>('PUT', '/subscription/admin/config', { subscriptionEnabled }),
   },
 };
 
