@@ -53,6 +53,8 @@ export default function ResearchPath() {
   useEffect(() => { saveProgress(progress); }, [progress]);
 
   const getStatus = (id: number, idx: number) => {
+    // Level 0 and 1 always free; Level 2+ locked if subscription enabled and user not subscribed
+    if (!subLoading && !isSubscribed && id >= 2) return "locked";
     if (completedIds.includes(id) || progress.completedLevels.includes(id)) return "completed";
     if (idx === 0) return "active";
     const prevId = levels[idx - 1]?.id;
@@ -83,19 +85,6 @@ export default function ResearchPath() {
   const activeLevel = activeLevelIdx !== null ? levels[activeLevelIdx] : null;
   const activeLevelData = activeLevelIdx !== null ? RESEARCH_SUB_LEVELS.find((d) => d.levelId === levels[activeLevelIdx].id) : null;
 
-
-  // ── Paywall gate: Level 1 is free, rest needs subscription ──────────────────
-  const highestCompletedLevel = Math.max(-1, ...(progress.completedLevels ?? []));
-  if (!subLoading && !isSubscribed && highestCompletedLevel >= 1) {
-    return (
-      <Paywall
-        domainId="research"
-        domainName="Research"
-        domainColor="#8b5cf6"
-        price={price}
-      />
-    );
-  }
 
 
   return (
@@ -171,7 +160,16 @@ export default function ResearchPath() {
                   <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.04 }}
                     className={cn("relative flex items-center w-full my-10", isLeft ? "justify-start md:justify-end md:pr-16" : "justify-start md:pl-16")}
                     style={{ zIndex: isActive ? 25 : 1, position: "relative" }}>
-                    <div onClick={() => { if (status === "locked") return; setActiveLevelIdx(activeLevelIdx === idx ? null : idx); }}
+                    <div onClick={() => { 
+                        if (status === "locked") {
+                          // If locked due to subscription, open the level to show paywall
+                          if (!subLoading && !isSubscribed && level.id >= 2) {
+                            setActiveLevelIdx(idx);
+                          }
+                          return;
+                        }
+                        setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
+                      }}
                       className="absolute left-6 md:left-1/2 transform -translate-x-1/2 transition-all duration-300 hover:scale-110"
                       style={{ zIndex: isActive ? 26 : 10, width: "52px", height: "52px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: isActive ? theme.gradient : status === "completed" ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.6)", border: `3px solid ${status === "locked" ? "rgba(255,255,255,0.1)" : isActive ? theme.primary : theme.border}`, boxShadow: isActive ? `0 0 30px ${theme.glow}, 0 0 70px ${theme.glow}` : status === "active" ? `0 0 16px ${theme.glow}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer" }}>
                       {status === "locked" && <Lock style={{ width: "18px", height: "18px", color: "#555" }} />}
@@ -180,7 +178,16 @@ export default function ResearchPath() {
                       {status === "active" && isActive && <ChevronRight style={{ width: "20px", height: "20px", color: "#000" }} />}
                     </div>
                     <motion.div whileHover={status !== "locked" ? { y: -3 } : {}}
-                      onClick={() => { if (status === "locked") return; setActiveLevelIdx(activeLevelIdx === idx ? null : idx); }}
+                      onClick={() => { 
+                        if (status === "locked") {
+                          // If locked due to subscription, open the level to show paywall
+                          if (!subLoading && !isSubscribed && level.id >= 2) {
+                            setActiveLevelIdx(idx);
+                          }
+                          return;
+                        }
+                        setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
+                      }}
                       style={{ marginLeft: "5rem", width: "calc(100% - 5rem)", padding: "16px 18px", borderRadius: "18px", background: isActive ? `linear-gradient(135deg, ${theme.card}, rgba(0,0,0,0.5))` : status === "completed" ? `${theme.card}` : "rgba(255,255,255,0.025)", border: `1px solid ${isActive ? theme.primary : status === "locked" ? "rgba(255,255,255,0.05)" : theme.border}`, boxShadow: isActive ? `0 0 32px ${theme.glow}` : status !== "locked" ? `0 4px 20px ${theme.card}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer", opacity: status === "locked" ? 0.6 : 1, transition: "all 0.3s ease", position: "relative", overflow: "hidden", zIndex: isActive ? 26 : 1 }}
                       className={cn("md:ml-0 md:w-[calc(50%-4rem)]")}>
                       {isActive && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: theme.gradient }} />}

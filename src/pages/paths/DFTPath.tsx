@@ -95,19 +95,6 @@ export default function DFTPath() {
   const activeLevelData = activeLevelIdx !== null ? dftSubLevels.find(d => d.levelId === levels[activeLevelIdx].id) : null;
 
 
-  // ── Paywall gate: Level 1 is free, rest needs subscription ──────────────────
-  const highestCompletedLevel = Math.max(-1, ...(progress.completedLevels ?? []));
-  if (!subLoading && !isSubscribed && highestCompletedLevel >= 1) {
-    return (
-      <Paywall
-        domainId="dft"
-        domainName="DFT"
-        domainColor="#ec4899"
-        price={price}
-      />
-    );
-  }
-
 
   return (
     <div className="min-h-screen pt-16 relative bg-black overflow-x-hidden">
@@ -182,7 +169,16 @@ export default function DFTPath() {
                   <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.04 }}
                     className={cn("relative flex items-center w-full my-10", isLeft ? "justify-start md:justify-end md:pr-16" : "justify-start md:pl-16")}
                     style={{ zIndex: isActive ? 25 : 1 }}>
-                    <div onClick={() => { if (status === "locked") return; setActiveLevelIdx(activeLevelIdx === idx ? null : idx); }}
+                    <div onClick={() => { 
+                        if (status === "locked") {
+                          // If locked due to subscription, open the level to show paywall
+                          if (!subLoading && !isSubscribed && level.id >= 2) {
+                            setActiveLevelIdx(idx);
+                          }
+                          return;
+                        }
+                        setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
+                      }}
                       className="absolute left-6 md:left-1/2 transform -translate-x-1/2 transition-all duration-300 hover:scale-110"
                       style={{ zIndex: isActive ? 26 : 10, width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: isActive ? theme.gradient : "rgba(0,0,0,0.8)", border: `3px solid ${status === "locked" ? "rgba(255,255,255,0.1)" : isActive ? theme.primary : theme.border}`, boxShadow: isActive ? `0 0 28px ${theme.glow}, 0 0 60px ${theme.glow}` : status === "active" ? `0 0 14px ${theme.glow}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer" }}>
                       {status === "locked" && <Lock style={{ width: "17px", height: "17px", color: "#555" }} />}
@@ -191,7 +187,16 @@ export default function DFTPath() {
                       {status === "active" && isActive && <ChevronRight style={{ width: "19px", height: "19px", color: "#000" }} />}
                     </div>
                     <motion.div whileHover={status !== "locked" ? { y: -3 } : {}}
-                      onClick={() => { if (status === "locked") return; setActiveLevelIdx(activeLevelIdx === idx ? null : idx); }}
+                      onClick={() => { 
+                        if (status === "locked") {
+                          // If locked due to subscription, open the level to show paywall
+                          if (!subLoading && !isSubscribed && level.id >= 2) {
+                            setActiveLevelIdx(idx);
+                          }
+                          return;
+                        }
+                        setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
+                      }}
                       style={{ marginLeft: "5rem", width: "calc(100% - 5rem)", padding: "15px 17px", borderRadius: "17px", background: isActive ? `linear-gradient(135deg, ${theme.card}, rgba(0,0,0,0.5))` : status === "completed" ? theme.card : "rgba(255,255,255,0.025)", border: `1px solid ${isActive ? theme.primary : status === "locked" ? "rgba(255,255,255,0.05)" : theme.border}`, boxShadow: isActive ? `0 0 30px ${theme.glow}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer", opacity: status === "locked" ? 0.6 : 1, transition: "all 0.3s ease", position: "relative", overflow: "hidden", zIndex: isActive ? 26 : 1 }}
                       className="md:ml-0 md:w-[calc(50%-4rem)]">
                       {isActive && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: theme.gradient }} />}

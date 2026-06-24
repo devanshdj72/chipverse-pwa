@@ -53,6 +53,8 @@ export default function RTLPath() {
   useEffect(() => { saveProgress(progress); }, [progress]);
 
   const getStatus = (id: number, idx: number) => {
+    // Level 0 and 1 always free; Level 2+ locked if subscription enabled and user not subscribed
+    if (!subLoading && !isSubscribed && id >= 2) return "locked";
     if (completedIds.includes(id) || progress.completedLevels.includes(id)) return "completed";
     if (idx === 0) return "active";
     const prevId = levels[idx - 1]?.id;
@@ -84,14 +86,10 @@ export default function RTLPath() {
   );
 
   const activeLevel     = activeLevelIdx !== null ? levels[activeLevelIdx] : null;
-  const activeLevelData = activeLevelIdx !== null
-    ? RTL_SUB_LEVELS.find((d) => d.levelId === levels[activeLevelIdx].id)
-    : null;
 
-
-  // ── Paywall gate: Level 1 is free, rest needs subscription ──────────────────
-  const highestCompletedLevel = Math.max(-1, ...(progress.completedLevels ?? []));
-  if (!subLoading && !isSubscribed && highestCompletedLevel >= 1) {
+  // ── Paywall: Level 0 and 1 free, Level 2+ requires subscription ──────────────
+  const tryingToAccessPaidLevel = activeLevel !== null && activeLevel.id >= 2;
+  if (!subLoading && !isSubscribed && tryingToAccessPaidLevel) {
     return (
       <Paywall
         domainId="rtl"
@@ -101,6 +99,10 @@ export default function RTLPath() {
       />
     );
   }
+  const activeLevelData = activeLevelIdx !== null
+    ? RTL_SUB_LEVELS.find((d) => d.levelId === levels[activeLevelIdx].id)
+    : null;
+
 
 
   return (
@@ -200,7 +202,16 @@ export default function RTLPath() {
                     style={{ zIndex: isActive ? 25 : 1, position: "relative" }}
                   >
                     <div
-                      onClick={() => { if (status === "locked") return; setActiveLevelIdx(activeLevelIdx === idx ? null : idx); }}
+                      onClick={() => { 
+                        if (status === "locked") {
+                          // If locked due to subscription, open the level to show paywall
+                          if (!subLoading && !isSubscribed && level.id >= 2) {
+                            setActiveLevelIdx(idx);
+                          }
+                          return;
+                        }
+                        setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
+                      }}
                       className="absolute left-6 md:left-1/2 transform -translate-x-1/2 transition-all duration-300 hover:scale-110"
                       style={{ zIndex: isActive ? 26 : 10, width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: isActive ? theme.gradient : status === "completed" ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.6)", border: `3px solid ${status === "locked" ? "rgba(255,255,255,0.1)" : isActive ? theme.primary : theme.border}`, boxShadow: isActive ? `0 0 28px ${theme.glow}, 0 0 60px ${theme.glow}` : status === "active" ? `0 0 14px ${theme.glow}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer" }}
                     >
@@ -212,7 +223,16 @@ export default function RTLPath() {
 
                     <motion.div
                       whileHover={status !== "locked" ? { y: -3 } : {}}
-                      onClick={() => { if (status === "locked") return; setActiveLevelIdx(activeLevelIdx === idx ? null : idx); }}
+                      onClick={() => { 
+                        if (status === "locked") {
+                          // If locked due to subscription, open the level to show paywall
+                          if (!subLoading && !isSubscribed && level.id >= 2) {
+                            setActiveLevelIdx(idx);
+                          }
+                          return;
+                        }
+                        setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
+                      }}
                       style={{ marginLeft: "5rem", width: "calc(100% - 5rem)", padding: "15px 17px", borderRadius: "17px", background: isActive ? `linear-gradient(135deg, ${theme.card}, rgba(0,0,0,0.5))` : status === "completed" ? theme.card : "rgba(255,255,255,0.025)", border: `1px solid ${isActive ? theme.primary : status === "locked" ? "rgba(255,255,255,0.05)" : theme.border}`, boxShadow: isActive ? `0 0 30px ${theme.glow}` : status !== "locked" ? `0 4px 18px ${theme.card}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer", opacity: status === "locked" ? 0.6 : 1, transition: "all 0.3s ease", position: "relative", overflow: "hidden", zIndex: isActive ? 26 : 1 }}
                       className={cn("md:ml-0 md:w-[calc(50%-4rem)]")}
                     >
