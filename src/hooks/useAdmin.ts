@@ -1,6 +1,4 @@
 // src/hooks/useAdmin.ts
-// Global admin context — token persisted in localStorage, shared across all admin pages
-
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { createElement } from "react";
 
@@ -20,6 +18,7 @@ interface AdminCtx {
   token: string | null;
   admin: AdminInfo | null;
   isLoggedIn: boolean;
+  isInitializing: boolean;
   isSuperAdmin: boolean;
   login: (email: string, password: string) => Promise<any>;
   logout: () => void;
@@ -27,30 +26,36 @@ interface AdminCtx {
 }
 
 const AdminContext = createContext<AdminCtx>({
-  token: null, admin: null, isLoggedIn: false, isSuperAdmin: false,
-  login: async () => {}, logout: () => {},
+  token: null, admin: null, isLoggedIn: false, isInitializing: true,
+  isSuperAdmin: false, login: async () => {}, logout: () => {},
   authHeaders: () => ({ "Content-Type": "application/json" }),
 });
+
+function readAdminInfo(): AdminInfo | null {
+  try {
+    const r = localStorage.getItem(ADMIN_INFO_KEY);
+    return r ? JSON.parse(r) : null;
+  } catch { return null; }
+}
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem(ADMIN_TOKEN_KEY)
   );
-  const [admin, setAdmin] = useState<AdminInfo | null>(() => {
-    try {
-      const raw = localStorage.getItem(ADMIN_INFO_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  });
+  const [admin, setAdmin] = useState<AdminInfo | null>(readAdminInfo);
+  // isInitializing: prevents auth guards from redirecting before first render completes
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Sync across tabs
+  useEffect(() => {
+    // After mount, mark initialized — guards can now safely redirect
+    setIsInitializing(false);
+  }, []);
+
+  // Sync state across browser tabs
   useEffect(() => {
     const handler = () => {
       setToken(localStorage.getItem(ADMIN_TOKEN_KEY));
-      try {
-        const raw = localStorage.getItem(ADMIN_INFO_KEY);
-        setAdmin(raw ? JSON.parse(raw) : null);
-      } catch { setAdmin(null); }
+      setAdmin(readAdminInfo());
     };
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
@@ -78,13 +83,19 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setAdmin(null);
   };
 
-  const authHeaders = () => ({
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token ?? localStorage.getItem(ADMIN_TOKEN_KEY) ?? ""}`,
-  });
+  const authHeaders = () => {
+    const t = token ?? localStorage.getItem(ADMIN_TOKEN_KEY) ?? "";
+    return { "Content-Type": "application/json", Authorization: `Bearer ${t}` };
+  };
 
   return createElement(AdminContext.Provider, {
-    value: { token, admin, isLoggedIn: !!token && !!admin, isSuperAdmin: admin?.role === "SUPER_ADMIN", login, logout, authHeaders }
+    value: {
+      token, admin,
+      isLoggedIn: !!token && !!admin,
+      isInitializing,
+      isSuperAdmin: admin?.role === "SUPER_ADMIN",
+      login, logout, authHeaders,
+    }
   }, children);
 }
 

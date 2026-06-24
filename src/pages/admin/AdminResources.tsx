@@ -108,6 +108,7 @@ export default function AdminResources() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (isInitializing) return;
     if (!isLoggedIn) { navigate("/admin/login"); return; }
     fetchResources();
   }, [isLoggedIn]);

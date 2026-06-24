@@ -40,7 +40,7 @@ type Resource = {
 };
 
 export default function AdminDashboard() {
-  const { admin, logout, authHeaders, isLoggedIn, isSuperAdmin } = useAdmin();
+  const { admin, logout, authHeaders, isLoggedIn, isInitializing, isSuperAdmin } = useAdmin();
   const [, navigate] = useLocation();
   const [allResources, setAllResources] = useState<Resource[]>([]);
   const [pendingResources, setPendingResources] = useState<Resource[]>([]);
@@ -52,6 +52,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "pending">("overview");
 
   useEffect(() => {
+    if (isInitializing) return;
     if (!isLoggedIn) { navigate("/admin/login"); return; }
     fetchData();
   }, [isLoggedIn]);

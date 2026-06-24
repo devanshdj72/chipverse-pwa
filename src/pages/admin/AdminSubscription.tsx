@@ -17,11 +17,12 @@ const DEFAULT_BUNDLES = [
 ];
 
 export default function AdminSubscription() {
-  const { admin, authHeaders, isLoggedIn } = useAdmin();
+  const { admin, authHeaders, isLoggedIn, isInitializing } = useAdmin();
   const [, navigate] = useLocation();
 
   // Auth guard — redirect to login if not logged in
   useEffect(() => {
+    if (isInitializing) return;
     if (!isLoggedIn) navigate("/admin/login");
   }, [isLoggedIn]);
   const isSuperAdmin = admin?.role === "SUPER_ADMIN";
