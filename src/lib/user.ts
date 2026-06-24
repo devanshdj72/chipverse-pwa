@@ -78,6 +78,11 @@ function useUserInternal() {
 
   useEffect(() => {
     const restoreSession = async () => {
+      // Skip user session restore on admin routes — admins use separate token system
+      if (window.location.pathname.startsWith('/admin')) {
+        setState(s => ({ ...s, isLoading: false }));
+        return;
+      }
       try {
         const storedRefreshToken = loadRefreshToken();
         const refreshRes = await api.auth.refreshToken(storedRefreshToken ?? undefined);
