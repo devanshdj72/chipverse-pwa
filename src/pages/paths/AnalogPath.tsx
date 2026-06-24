@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useSubscription } from "@/hooks/useSubscription";
 import Paywall from "@/components/Paywall";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,6 +42,7 @@ function saveProgress(p: AnalogProgress) {
 
 export default function AnalogPath() {
 
+  const [, setLocation] = useLocation();
   const { isSubscribed, isLoading: subLoading, price } = useSubscription("analog");
   const { profile, completeLevel, addXp } = useUserContext();
   const theme = DOMAIN_THEMES[DOMAIN_ID];
@@ -70,6 +72,9 @@ export default function AnalogPath() {
     if (isPrevLevelFullyComplete(idx)) return "active";
     return "locked";
   };
+
+  // True when THIS level is locked specifically due to missing subscription
+  const isPaywallLocked = (id: number) => !subLoading && !isSubscribed && id >= 2;
 
   const handleSubLevelComplete = (subLevelId: string, xp: number) => {
     setProgress(prev => {
@@ -167,42 +172,44 @@ export default function AnalogPath() {
                   <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.04 }}
                     className={cn("relative flex items-center w-full my-10", isLeft ? "justify-start md:justify-end md:pr-16" : "justify-start md:pl-16")}
                     style={{ zIndex: isActive ? 25 : 1 }}>
-                    <div onClick={() => { 
-                        if (status === "locked") {
-                          // If locked due to subscription, open the level to show paywall
-                          if (!subLoading && !isSubscribed && level.id >= 2) {
-                            setActiveLevelIdx(idx);
-                          }
+                    <div onClick={() => {
+                        if (isPaywallLocked(level.id)) {
+                          setLocation("/subscription");
                           return;
                         }
+                        if (status === "locked") return;
                         setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
                       }}
                       className="absolute left-6 md:left-1/2 transform -translate-x-1/2 transition-all duration-300 hover:scale-110"
-                      style={{ zIndex: isActive ? 26 : 10, width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: isActive ? theme.gradient : "rgba(0,0,0,0.8)", border: `3px solid ${status === "locked" ? "rgba(255,255,255,0.1)" : isActive ? theme.primary : theme.border}`, boxShadow: isActive ? `0 0 28px ${theme.glow}, 0 0 60px ${theme.glow}` : status === "active" ? `0 0 14px ${theme.glow}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer" }}>
+                      style={{ zIndex: isActive ? 26 : 10, width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: isActive ? theme.gradient : "rgba(0,0,0,0.8)", border: `3px solid ${status === "locked" ? "rgba(255,255,255,0.1)" : isActive ? theme.primary : theme.border}`, boxShadow: isActive ? `0 0 28px ${theme.glow}, 0 0 60px ${theme.glow}` : status === "active" ? `0 0 14px ${theme.glow}` : "none", cursor: isPaywallLocked(level.id) ? "pointer" : status === "locked" ? "not-allowed" : "pointer" }}>
                       {status === "locked" && <Lock style={{ width: "17px", height: "17px", color: "#555" }} />}
                       {status === "completed" && <Check style={{ width: "19px", height: "19px", color: theme.primary }} />}
                       {status === "active" && !isActive && <Play style={{ width: "17px", height: "17px", marginLeft: "2px", color: theme.primary }} />}
                       {status === "active" && isActive && <ChevronRight style={{ width: "19px", height: "19px", color: "#000" }} />}
                     </div>
                     <motion.div whileHover={status !== "locked" ? { y: -3 } : {}}
-                      onClick={() => { 
-                        if (status === "locked") {
-                          // If locked due to subscription, open the level to show paywall
-                          if (!subLoading && !isSubscribed && level.id >= 2) {
-                            setActiveLevelIdx(idx);
-                          }
+                      onClick={() => {
+                        if (isPaywallLocked(level.id)) {
+                          setLocation("/subscription");
                           return;
                         }
+                        if (status === "locked") return;
                         setActiveLevelIdx(activeLevelIdx === idx ? null : idx);
                       }}
-                      style={{ marginLeft: "5rem", width: "calc(100% - 5rem)", padding: "15px 17px", borderRadius: "17px", background: isActive ? `linear-gradient(135deg, ${theme.card}, rgba(0,0,0,0.5))` : status === "completed" ? theme.card : "rgba(255,255,255,0.025)", border: `1px solid ${isActive ? theme.primary : status === "locked" ? "rgba(255,255,255,0.05)" : theme.border}`, boxShadow: isActive ? `0 0 30px ${theme.glow}` : "none", cursor: status === "locked" ? "not-allowed" : "pointer", opacity: status === "locked" ? 0.6 : 1, transition: "all 0.3s ease", position: "relative", overflow: "hidden", zIndex: isActive ? 26 : 1 }}
+                      style={{ marginLeft: "5rem", width: "calc(100% - 5rem)", padding: "15px 17px", borderRadius: "17px", background: isActive ? `linear-gradient(135deg, ${theme.card}, rgba(0,0,0,0.5))` : status === "completed" ? theme.card : "rgba(255,255,255,0.025)", border: `1px solid ${isActive ? theme.primary : status === "locked" ? "rgba(255,255,255,0.05)" : theme.border}`, boxShadow: isActive ? `0 0 30px ${theme.glow}` : "none", cursor: isPaywallLocked(level.id) ? "pointer" : status === "locked" ? "not-allowed" : "pointer", opacity: isPaywallLocked(level.id) ? 0.85 : status === "locked" ? 0.4 : 1, transition: "all 0.3s ease", position: "relative", overflow: "hidden", zIndex: isActive ? 26 : 1 }}
                       className="md:ml-0 md:w-[calc(50%-4rem)]">
                       {isActive && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: theme.gradient }} />}
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-bold text-base text-white font-['Orbitron']">{level.title}</h4>
-                        <span className="text-xs font-mono px-2 py-1 rounded bg-white/10 text-gray-300 border border-white/10 shrink-0 ml-2">{level.xp} XP</span>
+                        {isPaywallLocked(level.id)
+                          ? <span className="text-xs font-bold px-2 py-1 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/40 shrink-0 ml-2 flex items-center gap-1">🔒 Subscribe</span>
+                          : <span className="text-xs font-mono px-2 py-1 rounded bg-white/10 text-gray-300 border border-white/10 shrink-0 ml-2">{level.xp} XP</span>
+                        }
                       </div>
-                      <p className="text-sm text-gray-400 mb-3">{level.difficulty} · {level.hours}h</p>
+                      {isPaywallLocked(level.id)
+                          ? <p className="text-sm text-orange-400/80 mb-3 font-semibold">Click to subscribe and unlock →</p>
+                          : <p className="text-sm text-gray-400 mb-3">{level.difficulty} · {level.hours}h</p>
+                        }
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {level.topics.slice(0, 3).map((topic: string, i: number) => (
                           <span key={i} className="text-xs px-2 py-1 rounded bg-white/5 border border-white/8 text-gray-400">{topic}</span>
