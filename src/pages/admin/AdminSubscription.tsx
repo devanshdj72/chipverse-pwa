@@ -22,9 +22,12 @@ export default function AdminSubscription() {
 
   // Auth guard — redirect to login if not logged in
   useEffect(() => {
+    // Wait until AdminProvider has read localStorage
     if (isInitializing) return;
-    if (!isLoggedIn) navigate("/admin/login");
-  }, [isLoggedIn]);
+    // Double-check localStorage directly — guards against context timing issues
+    const tokenInStorage = localStorage.getItem("chipverse_admin_token");
+    if (!isLoggedIn && !tokenInStorage) navigate("/admin/login");
+  }, [isLoggedIn, isInitializing]);
   const isSuperAdmin = admin?.role === "SUPER_ADMIN";
   const { subscriptionEnabled, refetch: refetchConfig } = useSubscriptionConfig();
 
