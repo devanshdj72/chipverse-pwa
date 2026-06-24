@@ -21,13 +21,7 @@ export default function AdminSubscription() {
   const [, navigate] = useLocation();
 
   // Auth guard — redirect to login if not logged in
-  useEffect(() => {
-    // Wait until AdminProvider has read localStorage
-    if (isInitializing) return;
-    // Double-check localStorage directly — guards against context timing issues
-    const tokenInStorage = localStorage.getItem("chipverse_admin_token");
-    if (!isLoggedIn && !tokenInStorage) navigate("/admin/login");
-  }, [isLoggedIn, isInitializing]);
+
   const isSuperAdmin = admin?.role === "SUPER_ADMIN";
   const { subscriptionEnabled, refetch: refetchConfig } = useSubscriptionConfig();
 
@@ -118,6 +112,20 @@ export default function AdminSubscription() {
   };
 
   const totalRevenue = payments.filter(p => p.status === "SUCCESS").reduce((s, p) => s + p.amount, 0);
+
+  // ── Auth guard: render-time check (no useEffect timing issues) ──────────────
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!isLoggedIn) {
+    // Use window.location to avoid React router timing issues after 404 redirect
+    window.location.href = window.location.origin + '/chipverse-pwa/admin/login';
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] p-6">

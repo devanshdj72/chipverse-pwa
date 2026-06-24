@@ -130,6 +130,20 @@ export default function AdminDashboard() {
     domainStats[r.domain] = (domainStats[r.domain] || 0) + 1;
   });
 
+  // ── Auth guard: render-time check (no useEffect timing issues) ──────────────
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!isLoggedIn) {
+    // Use window.location to avoid React router timing issues after 404 redirect
+    window.location.href = window.location.origin + '/chipverse-pwa/admin/login';
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-black">
       <CircuitBackground />
