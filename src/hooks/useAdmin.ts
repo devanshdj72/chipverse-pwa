@@ -1,8 +1,11 @@
-// frontend/src/hooks/useAdmin.ts
-import { useState } from "react";
+// src/hooks/useAdmin.ts
+// Global admin context — token persisted in localStorage, shared across all admin pages
+
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createElement } from "react";
 
 const ADMIN_TOKEN_KEY = "chipverse_admin_token";
-const ADMIN_INFO_KEY = "chipverse_admin_info";
+const ADMIN_INFO_KEY  = "chipverse_admin_info";
 
 export const API_BASE = "https://chipverse-backend.onrender.com";
 
@@ -13,7 +16,23 @@ export type AdminInfo = {
   role: "ADMIN" | "SUPER_ADMIN";
 };
 
-export function useAdmin() {
+interface AdminCtx {
+  token: string | null;
+  admin: AdminInfo | null;
+  isLoggedIn: boolean;
+  isSuperAdmin: boolean;
+  login: (email: string, password: string) => Promise<any>;
+  logout: () => void;
+  authHeaders: () => Record<string, string>;
+}
+
+const AdminContext = createContext<AdminCtx>({
+  token: null, admin: null, isLoggedIn: false, isSuperAdmin: false,
+  login: async () => {}, logout: () => {},
+  authHeaders: () => ({ "Content-Type": "application/json" }),
+});
+
+export function AdminProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem(ADMIN_TOKEN_KEY)
   );
@@ -23,6 +42,19 @@ export function useAdmin() {
       return raw ? JSON.parse(raw) : null;
     } catch { return null; }
   });
+
+  // Sync across tabs
+  useEffect(() => {
+    const handler = () => {
+      setToken(localStorage.getItem(ADMIN_TOKEN_KEY));
+      try {
+        const raw = localStorage.getItem(ADMIN_INFO_KEY);
+        setAdmin(raw ? JSON.parse(raw) : null);
+      } catch { setAdmin(null); }
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await fetch(`${API_BASE}/api/admin/login`, {
@@ -48,12 +80,14 @@ export function useAdmin() {
 
   const authHeaders = () => ({
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${token ?? localStorage.getItem(ADMIN_TOKEN_KEY) ?? ""}`,
   });
 
-  return {
-    token, admin, login, logout, authHeaders,
-    isLoggedIn: !!token,
-    isSuperAdmin: admin?.role === "SUPER_ADMIN",
-  };
+  return createElement(AdminContext.Provider, {
+    value: { token, admin, isLoggedIn: !!token && !!admin, isSuperAdmin: admin?.role === "SUPER_ADMIN", login, logout, authHeaders }
+  }, children);
+}
+
+export function useAdmin() {
+  return useContext(AdminContext);
 }

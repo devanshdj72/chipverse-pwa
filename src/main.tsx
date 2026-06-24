@@ -3,12 +3,15 @@ import App from "./App";
 import "./index.css";
 import { UserProvider } from "@/lib/user";
 import { SubscriptionConfigProvider } from "@/lib/SubscriptionConfig";
+import { AdminProvider } from "@/hooks/useAdmin";
 
 createRoot(document.getElementById("root")!).render(
   <UserProvider>
-    <SubscriptionConfigProvider>
-      <App />
-    </SubscriptionConfigProvider>
+    <AdminProvider>
+      <SubscriptionConfigProvider>
+        <App />
+      </SubscriptionConfigProvider>
+    </AdminProvider>
   </UserProvider>
 );
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useSubscriptionConfig } from "@/lib/SubscriptionConfig";
 import { DOMAIN_LIST } from "@/lib/data";
 import { useAdmin, API_BASE } from "@/hooks/useAdmin";
@@ -17,6 +18,12 @@ const DEFAULT_BUNDLES = [
 
 export default function AdminSubscription() {
   const { admin, authHeaders, isLoggedIn } = useAdmin();
+  const [, navigate] = useLocation();
+
+  // Auth guard — redirect to login if not logged in
+  useEffect(() => {
+    if (!isLoggedIn) navigate("/admin/login");
+  }, [isLoggedIn]);
   const isSuperAdmin = admin?.role === "SUPER_ADMIN";
   const { subscriptionEnabled, refetch: refetchConfig } = useSubscriptionConfig();
 
