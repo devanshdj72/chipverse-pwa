@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import api from "@/lib/api";
 import { useSubscriptionConfig } from "@/lib/SubscriptionConfig";
 import { DOMAIN_LIST } from "@/lib/data";
-import { useAdmin } from "@/hooks/useAdmin";
+import { useAdmin, API_BASE } from "@/hooks/useAdmin";
 
 const DOMAIN_COLORS: Record<string, string> = {
   rtl: "#00f5ff", verification: "#a855f7", "physical-design": "#3b82f6",
@@ -17,53 +16,66 @@ const DEFAULT_BUNDLES = [
 ];
 
 export default function AdminSubscription() {
-  const { admin } = useAdmin();
-  const isSuperAdmin = admin?.adminRole === "SUPER_ADMIN";
+  const { admin, authHeaders, isLoggedIn } = useAdmin();
+  const isSuperAdmin = admin?.role === "SUPER_ADMIN";
   const { subscriptionEnabled, refetch: refetchConfig } = useSubscriptionConfig();
+
+  const [prices, setPrices]   = useState<Record<string, string>>({});
+  const [bundles, setBundles] = useState(DEFAULT_BUNDLES);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [saving, setSaving]   = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [toast, setToast]     = useState<string | null>(null);
+  const [tab, setTab]         = useState<"domains" | "bundles" | "payments">("domains");
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500); };
+
+  // ── Admin fetch helper ──────────────────────────────────────────────────────
+  const adminFetch = async (path: string, options: RequestInit = {}) => {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: { ...authHeaders(), ...(options.headers ?? {}) },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    (async () => {
+      try {
+        const res = await adminFetch("/api/subscription/admin/pricing");
+        const domainPrices: any[] = res.data?.domainPrices ?? [];
+        const bundlePrices: any[] = res.data?.bundles ?? [];
+
+        const priceMap: Record<string, string> = {};
+        domainPrices.forEach(p => { priceMap[p.domainId] = String(p.price); });
+        setPrices(priceMap);
+        if (bundlePrices.length) setBundles(bundlePrices);
+      } catch { showToast("⚠️ Could not load pricing (DB migration pending)"); }
+
+      try {
+        const pRes = await adminFetch("/api/subscription/admin/payments");
+        setPayments(pRes.data ?? []);
+      } catch {}
+    })();
+  }, [isLoggedIn]);
 
   const toggleSubscription = async () => {
     if (!isSuperAdmin) return;
     setToggling(true);
     try {
-      await api.subscription.adminSetConfig(!subscriptionEnabled);
+      await adminFetch("/api/subscription/admin/config", {
+        method: "PUT",
+        body: JSON.stringify({ subscriptionEnabled: !subscriptionEnabled }),
+      });
       refetchConfig();
-      showToast((!subscriptionEnabled ? "✅ Subscription system ENABLED" : "⚠️ Subscription system DISABLED — all access granted"));
-    } catch { showToast("❌ Failed to update"); }
+      showToast(!subscriptionEnabled
+        ? "✅ Subscription ENABLED — paywalls are now active"
+        : "⚠️ Subscription DISABLED — all users have free access");
+    } catch { showToast("❌ Failed to update config"); }
     setToggling(false);
   };
-
-  const [prices, setPrices] = useState<Record<string, string>>({});
-  const [bundles, setBundles] = useState(DEFAULT_BUNDLES);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [saving, setSaving] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [tab, setTab] = useState<"domains" | "bundles" | "payments">("domains");
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.subscription.adminGetPricing();
-        const domainPrices: any[] = res.data.domainPrices;
-        const bundlePrices: any[] = res.data.bundles;
-
-        const priceMap: Record<string, string> = {};
-        domainPrices.forEach(p => { priceMap[p.domainId] = String(p.price); });
-        setPrices(priceMap);
-
-        if (bundlePrices.length) {
-          setBundles(bundlePrices.map(b => ({
-            domainCount: b.domainCount, label: b.label, discount: b.discount,
-          })));
-        }
-
-        const pRes = await api.subscription.adminGetPayments();
-        setPayments(pRes.data as any[]);
-      } catch {}
-    })();
-  }, []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   const saveDomainPrice = async (domainId: string) => {
     if (!isSuperAdmin) return;
@@ -71,9 +83,12 @@ export default function AdminSubscription() {
     if (isNaN(price) || price < 0) return;
     setSaving(domainId);
     try {
-      await api.subscription.adminSetDomainPrice(domainId, price);
+      await adminFetch("/api/subscription/admin/pricing/domain", {
+        method: "PUT",
+        body: JSON.stringify({ domainId, price }),
+      });
       showToast(`✅ Price saved for ${domainId}`);
-    } catch { showToast("❌ Failed to save"); }
+    } catch { showToast("❌ Failed to save price"); }
     setSaving(null);
   };
 
@@ -82,9 +97,12 @@ export default function AdminSubscription() {
     const b = bundles[idx];
     setSaving(`bundle_${idx}`);
     try {
-      await api.subscription.adminSetBundleDiscount(b.domainCount, b.discount, b.label);
+      await adminFetch("/api/subscription/admin/pricing/bundle", {
+        method: "PUT",
+        body: JSON.stringify({ domainCount: b.domainCount, discount: b.discount, label: b.label }),
+      });
       showToast(`✅ Bundle saved: ${b.label}`);
-    } catch { showToast("❌ Failed to save"); }
+    } catch { showToast("❌ Failed to save bundle"); }
     setSaving(null);
   };
 
@@ -93,21 +111,24 @@ export default function AdminSubscription() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] p-6">
       {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-black border border-white/20 text-white text-sm px-5 py-2.5 rounded-xl shadow-2xl">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-black border border-white/20
+          text-white text-sm px-5 py-2.5 rounded-xl shadow-2xl whitespace-nowrap">
           {toast}
         </div>
       )}
 
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-black text-white font-['Orbitron'] mb-1">Subscription Pricing</h1>
-          <p className="text-gray-500 text-sm">
-            {isSuperAdmin ? "Super Admin — full pricing control" : "Admin — view only"}
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black text-white font-['Orbitron'] mb-1">Subscription Pricing</h1>
+            <p className="text-gray-500 text-sm">
+              {isSuperAdmin ? "Super Admin — full pricing control" : "Admin — view only"}
+            </p>
+          </div>
         </div>
 
-        {/* ── Master Toggle ────────────────────────────────────────────────── */}
+        {/* ── Master Toggle ─────────────────────────────────────────────────── */}
         <div className={`rounded-2xl border p-5 mb-8 flex items-center justify-between gap-4
           ${subscriptionEnabled
             ? "border-orange-500/40 bg-orange-500/8"
@@ -121,7 +142,7 @@ export default function AdminSubscription() {
             </div>
             <p className="text-gray-500 text-xs">
               {subscriptionEnabled
-                ? "Paywalls are active. Users must subscribe after Level 1 to continue."
+                ? "Paywalls are active. Users must subscribe after Level 1."
                 : "All users have full free access. Paywalls are hidden everywhere."}
             </p>
           </div>
@@ -138,9 +159,9 @@ export default function AdminSubscription() {
         {/* Revenue Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { label: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, color: "#10b981" },
-            { label: "Total Orders", value: payments.filter(p => p.status === "SUCCESS").length, color: "#00f5ff" },
-            { label: "Pending", value: payments.filter(p => p.status === "PENDING").length, color: "#f59e0b" },
+            { label: "Total Revenue",  value: `₹${totalRevenue.toLocaleString()}`, color: "#10b981" },
+            { label: "Total Orders",   value: payments.filter(p => p.status === "SUCCESS").length, color: "#00f5ff" },
+            { label: "Pending",        value: payments.filter(p => p.status === "PENDING").length,  color: "#f59e0b" },
           ].map(s => (
             <div key={s.label} className="bg-white/5 border border-white/10 rounded-xl p-4">
               <div className="text-2xl font-black font-['Orbitron']" style={{ color: s.color }}>{s.value}</div>
@@ -167,10 +188,8 @@ export default function AdminSubscription() {
               const color = DOMAIN_COLORS[domain.id] ?? "#00f5ff";
               return (
                 <div key={domain.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-['Orbitron'] shrink-0"
-                    style={{ background: color + "20", color }}>
-                    ⬡
-                  </div>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                    style={{ background: color + "20", color }}>⬡</div>
                   <div className="flex-1 min-w-0">
                     <div className="text-white text-sm font-semibold truncate">{domain.name}</div>
                     <div className="text-gray-500 text-xs">{domain.roadmap}</div>
@@ -178,13 +197,11 @@ export default function AdminSubscription() {
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-gray-400 text-sm">₹</span>
                     <input
-                      type="number"
-                      value={prices[domain.id] ?? ""}
-                      onChange={e => setPrices(p => ({ ...p, [domain.id]: e.target.value }))}
+                      type="number" value={prices[domain.id] ?? ""} placeholder="0"
                       disabled={!isSuperAdmin}
-                      placeholder="0"
-                      className="w-24 bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-white text-sm text-right
-                        focus:outline-none focus:border-orange-500/50 disabled:opacity-50"
+                      onChange={e => setPrices(p => ({ ...p, [domain.id]: e.target.value }))}
+                      className="w-24 bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-white
+                        text-sm text-right focus:outline-none focus:border-orange-500/50 disabled:opacity-50"
                     />
                     {isSuperAdmin && (
                       <button onClick={() => saveDomainPrice(domain.id)}
@@ -209,30 +226,29 @@ export default function AdminSubscription() {
                 <div className="flex items-center gap-6 flex-wrap">
                   <div className="shrink-0">
                     <div className="text-white font-bold font-['Orbitron']">{b.domainCount} Domain Bundle</div>
-                    <div className="text-gray-500 text-xs mt-0.5">Triggers when {b.domainCount}+ domains selected</div>
+                    <div className="text-gray-500 text-xs mt-0.5">Triggers at {b.domainCount}+ domains</div>
                   </div>
                   <div className="flex items-center gap-3 flex-1 flex-wrap">
                     <div>
                       <label className="text-gray-500 text-xs block mb-1">Label</label>
                       <input value={b.label} disabled={!isSuperAdmin}
                         onChange={e => setBundles(prev => prev.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
-                        className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm
-                          focus:outline-none focus:border-orange-500/50 disabled:opacity-50 w-36" />
+                        className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-white
+                          text-sm focus:outline-none focus:border-orange-500/50 disabled:opacity-50 w-36" />
                     </div>
                     <div>
                       <label className="text-gray-500 text-xs block mb-1">Discount %</label>
-                      <input type="number" value={b.discount} disabled={!isSuperAdmin} min={0} max={90}
+                      <input type="number" value={b.discount} min={0} max={90} disabled={!isSuperAdmin}
                         onChange={e => setBundles(prev => prev.map((x, j) => j === i ? { ...x, discount: +e.target.value } : x))}
-                        className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm
-                          focus:outline-none focus:border-orange-500/50 disabled:opacity-50 w-24" />
+                        className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-white
+                          text-sm focus:outline-none focus:border-orange-500/50 disabled:opacity-50 w-24" />
                     </div>
                     {isSuperAdmin && (
                       <div className="mt-5">
-                        <button onClick={() => saveBundle(i)}
-                          disabled={saving === `bundle_${i}`}
+                        <button onClick={() => saveBundle(i)} disabled={saving === `bundle_${i}`}
                           className="px-4 py-1.5 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30
                             text-orange-400 text-sm rounded-lg transition-all disabled:opacity-50 font-semibold">
-                          {saving === `bundle_${i}` ? "Saving..." : "Save Bundle"}
+                          {saving === `bundle_${i}` ? "Saving..." : "Save"}
                         </button>
                       </div>
                     )}
