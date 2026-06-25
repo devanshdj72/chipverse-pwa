@@ -23,26 +23,14 @@ import { useUserContext } from "@/lib/user";
 
 // ── Wake up Render backend (free tier sleeps after 15 min inactivity) ──────────
 async function wakeBackend(setStatus?: (msg: string) => void) {
-  const BACKEND = "https://chipverse-backend.onrender.com";
-  const MAX_WAIT = 60_000; // 60s max
-  const POLL = 3_000;      // check every 3s
-  const start = Date.now();
-
-  setStatus?.("Waking up server… (first login may take ~30s)");
-
-  while (Date.now() - start < MAX_WAIT) {
-    try {
-      const res = await fetch(`${BACKEND}/health`, { signal: AbortSignal.timeout(5000) });
-      if (res.ok || res.status === 404) {
-        // 404 means server is awake (no /health route = still responding)
-        setStatus?.("Server ready! Redirecting…");
-        await new Promise(r => setTimeout(r, 500));
-        return;
-      }
-    } catch {}
-    await new Promise(r => setTimeout(r, POLL));
-  }
-  setStatus?.("Redirecting…");
+  // Fire-and-forget ping to wake Render (no CORS needed — we don't read response)
+  // Then redirect immediately — backend will be warm by the time Google redirects back
+  setStatus?.("Connecting…");
+  try {
+    fetch("https://chipverse-backend.onrender.com/api/health", { mode: "no-cors" });
+  } catch {}
+  await new Promise(r => setTimeout(r, 800));
+  setStatus?.("");
 }
 
 
