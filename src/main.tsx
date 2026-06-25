@@ -11,10 +11,12 @@ import { AdminProvider } from "@/hooks/useAdmin";
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('oauth_token');
   const error  = params.get('oauth_error');
+  console.log('[OAuth] URL params:', window.location.search);
+  console.log('[OAuth] token:', token ? token.substring(0,20)+'...' : 'none');
+  console.log('[OAuth] error:', error);
   if (token) {
     localStorage.setItem('chipverse_oauth_token', token);
     sessionStorage.setItem('oauth_redirect', '/dashboard');
-    // Clean URL so React router doesn't see the params
     window.history.replaceState({}, '', '/chipverse-pwa/');
   } else if (error) {
     sessionStorage.setItem('oauth_error', error);
