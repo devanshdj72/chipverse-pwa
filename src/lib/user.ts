@@ -83,6 +83,19 @@ function useUserInternal() {
         setState(s => ({ ...s, isLoading: false }));
         return;
       }
+
+      // Check for OAuth token from Google/LinkedIn callback
+      const oauthToken = localStorage.getItem('chipverse_oauth_token');
+      if (oauthToken) {
+        localStorage.removeItem('chipverse_oauth_token');
+        setAccessToken(oauthToken);
+        try {
+          const meRes = await api.auth.me();
+          setState({ user: meRes.data, profile: null, isLoading: false, isAuthenticated: true });
+          return;
+        } catch {}
+      }
+
       try {
         const storedRefreshToken = loadRefreshToken();
         const refreshRes = await api.auth.refreshToken(storedRefreshToken ?? undefined);

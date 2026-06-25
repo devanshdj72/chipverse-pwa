@@ -36,9 +36,12 @@
       // Handle SPA redirects from 404.html
       (function() {
         var redirect = sessionStorage.getItem('redirect');
-        if (redirect) {
+        if (redirect && redirect !== '/') {
           sessionStorage.removeItem('redirect');
-          if (redirect !== '/') {
+          // Use location.replace for OAuth callbacks (has ?token=) so React sees the correct URL
+          if (redirect.indexOf('?') !== -1 || redirect.indexOf('auth/callback') !== -1) {
+            window.location.replace('/chipverse-pwa' + redirect);
+          } else {
             window.history.replaceState(null, null, '/chipverse-pwa' + redirect);
           }
         }
