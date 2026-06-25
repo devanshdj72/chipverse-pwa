@@ -22,16 +22,7 @@ import CircuitBackground from "@/components/CircuitBackground";
 import { useUserContext } from "@/lib/user";
 
 // ── Wake up Render backend (free tier sleeps after 15 min inactivity) ──────────
-async function wakeBackend(setStatus?: (msg: string) => void) {
-  // Fire-and-forget ping to wake Render (no CORS needed — we don't read response)
-  // Then redirect immediately — backend will be warm by the time Google redirects back
-  setStatus?.("Connecting…");
-  try {
-    fetch("https://chipverse-backend.onrender.com/api/health", { mode: "no-cors" });
-  } catch {}
-  await new Promise(r => setTimeout(r, 800));
-  setStatus?.("");
-}
+
 
 
 /* ─── Chip Illustration ─── */
@@ -416,12 +407,10 @@ function LoginForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     }
   };
 
-  const handleSocial = async (name: string) => {
+  const handleSocial = (name: string) => {
     if (name === "Google") {
-      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
-      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setShowOtp(true);
@@ -523,12 +512,10 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     }
   };
 
-  const handleSocial = async (name: string) => {
+  const handleSocial = (name: string) => {
     if (name === "Google") {
-      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
-      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setShowOtp(true);
