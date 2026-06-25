@@ -84,14 +84,18 @@ function useUserInternal() {
         return;
       }
 
-      // Check for OAuth token from Google/LinkedIn callback
+      // Check for OAuth token from Google/LinkedIn redirect (via /?oauth_token=xxx)
       const oauthToken = localStorage.getItem('chipverse_oauth_token');
+      const oauthRedirect = sessionStorage.getItem('oauth_redirect');
       if (oauthToken) {
         localStorage.removeItem('chipverse_oauth_token');
+        sessionStorage.removeItem('oauth_redirect');
         setAccessToken(oauthToken);
         try {
-          const meRes = await api.auth.me();
-          setState({ user: meRes.data, profile: null, isLoading: false, isAuthenticated: true });
+          const [meRes, profile] = await Promise.all([api.auth.me(), loadProfile()]);
+          setState({ user: meRes.data, profile, isLoading: false, isAuthenticated: true });
+          // Redirect to dashboard
+          if (oauthRedirect) window.location.href = '/chipverse-pwa' + oauthRedirect;
           return;
         } catch {}
       }
