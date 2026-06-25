@@ -407,11 +407,18 @@ function LoginForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     }
   };
 
-  const handleSocial = (name: string) => {
+  const handleSocial = async (name: string) => {
+    if (name === "Google" || name === "LinkedIn") {
+      // Unregister SW so it doesn't intercept the OAuth redirect
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    }
     if (name === "Google") {
-      window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
+      window.location.replace(`https://chipverse-backend.onrender.com/api/auth/google`);
     } else if (name === "LinkedIn") {
-      window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
+      window.location.replace(`https://chipverse-backend.onrender.com/api/auth/linkedin`);
     } else if (name === "OTP") {
       setShowOtp(true);
       setTimeout(() => setToast(""), 2500);
@@ -512,11 +519,18 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     }
   };
 
-  const handleSocial = (name: string) => {
+  const handleSocial = async (name: string) => {
+    if (name === "Google" || name === "LinkedIn") {
+      // Unregister SW so it doesn't intercept the OAuth redirect
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    }
     if (name === "Google") {
-      window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
+      window.location.replace(`https://chipverse-backend.onrender.com/api/auth/google`);
     } else if (name === "LinkedIn") {
-      window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
+      window.location.replace(`https://chipverse-backend.onrender.com/api/auth/linkedin`);
     } else if (name === "OTP") {
       setShowOtp(true);
       setTimeout(() => setToast(""), 2500);
