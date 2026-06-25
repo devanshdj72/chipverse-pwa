@@ -409,7 +409,7 @@ function LoginForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     } else if (name === "LinkedIn") {
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
-      setToast("OTP login coming soon…");
+      setShowOtp(true);
       setTimeout(() => setToast(""), 2500);
     }
   };
@@ -514,7 +514,7 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     } else if (name === "LinkedIn") {
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
-      setToast("OTP login coming soon…");
+      setShowOtp(true);
       setTimeout(() => setToast(""), 2500);
     }
   };
@@ -594,8 +594,105 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
 }
 
 /* ─── Auth Card ─── */
+function OtpForm({ onSuccess }: { onSuccess: (name: string) => void }) {
+  const { verifyOtp, login } = useUserContext();
+  const [phone, setPhone]   = useState("");
+  const [code, setCode]     = useState("");
+  const [step, setStep]     = useState<"phone" | "code">("phone");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast]   = useState("");
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+  const sendOtp = async () => {
+    if (!phone || phone.length < 10) { showToast("Enter valid 10-digit mobile number"); return; }
+    setLoading(true);
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL ?? "https://chipverse-backend.onrender.com/api"}/auth/otp/send`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      setStep("code");
+      showToast("OTP sent to your registered email / check server logs");
+    } catch { showToast("Failed to send OTP"); }
+    setLoading(false);
+  };
+
+  const verify = async () => {
+    if (code.length !== 6) { showToast("Enter 6-digit OTP"); return; }
+    setLoading(true);
+    try {
+      const res = await verifyOtp(phone, code);
+      onSuccess(res?.user?.name ?? "User");
+    } catch { showToast("Invalid or expired OTP"); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ padding: "8px 0" }}>
+      {toast && <div className="mb-3 text-xs text-center px-3 py-2 rounded-lg" style={{ background: "rgba(0,245,255,0.08)", color: "#00f5ff", border: "1px solid rgba(0,245,255,0.2)" }}>{toast}</div>}
+      {step === "phone" ? (
+        <>
+          <p className="text-gray-400 text-sm mb-4 text-center">Enter your registered mobile number</p>
+          <div className="mb-4">
+            <label className="text-xs text-gray-500 mb-1 block">MOBILE NUMBER</label>
+            <input
+              type="tel" value={phone} maxLength={10}
+              onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+              placeholder="10-digit mobile"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-cyan-500/50"
+            />
+          </div>
+          <button onClick={sendOtp} disabled={loading}
+            className="w-full py-3 rounded-xl font-bold text-sm"
+            style={{ background: "linear-gradient(135deg,#7700ff,#00f5ff)", color: "#fff", opacity: loading ? 0.7 : 1 }}>
+            {loading ? "Sending…" : "Send OTP →"}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="text-gray-400 text-sm mb-1 text-center">OTP sent to your email</p>
+          <p className="text-xs text-gray-600 mb-4 text-center">Check your registered email inbox</p>
+          <div className="mb-4">
+            <label className="text-xs text-gray-500 mb-1 block">ENTER 6-DIGIT OTP</label>
+            <input
+              type="text" value={code} maxLength={6}
+              onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
+              placeholder="000000"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-cyan-500/50"
+            />
+          </div>
+          <button onClick={verify} disabled={loading}
+            className="w-full py-3 rounded-xl font-bold text-sm mb-3"
+            style={{ background: "linear-gradient(135deg,#7700ff,#00f5ff)", color: "#fff", opacity: loading ? 0.7 : 1 }}>
+            {loading ? "Verifying…" : "Verify OTP →"}
+          </button>
+          <button onClick={() => { setStep("phone"); setCode(""); }} className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors">
+            ← Change number
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function AuthCard({ onSuccess }: { onSuccess: (name: string) => void }) {
   const [tab, setTab] = useState<"login" | "register">("login");
+  const [showOtp, setShowOtp] = useState(false);
+
+  if (showOtp) return (
+    <div style={{ animation: "slideUp 0.7s ease-out" }}>
+      <div className="relative overflow-hidden rounded-2xl"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,245,255,0.16)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", padding: "clamp(16px,4vw,26px)" }}>
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={() => setShowOtp(false)} className="text-gray-500 hover:text-gray-300 transition-colors text-sm">← Back</button>
+          <h3 className="text-white font-bold font-['Orbitron']">Login with Mobile OTP</h3>
+        </div>
+        <OtpForm onSuccess={onSuccess} />
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ animation: "slideUp 0.7s ease-out" }}>
       <div
