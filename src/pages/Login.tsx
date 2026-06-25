@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type ChangeEvent } from "react";
+import { useState, useEffect, type ReactNode, type ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import {
   Mail,
@@ -803,6 +803,16 @@ function FeatureBullets() {
 export default function Login() {
   const { setName } = useUserContext();
   const [, setLocation] = useLocation();
+
+  // Show error from OAuth redirect (e.g. ?error=google_failed)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    if (err) {
+      // Clean the URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const handleSuccess = (name: string) => {
     setName(name);
