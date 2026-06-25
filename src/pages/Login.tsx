@@ -21,6 +21,31 @@ import ParticleCanvas from "@/components/ParticleCanvas";
 import CircuitBackground from "@/components/CircuitBackground";
 import { useUserContext } from "@/lib/user";
 
+// ── Wake up Render backend (free tier sleeps after 15 min inactivity) ──────────
+async function wakeBackend(setStatus?: (msg: string) => void) {
+  const BACKEND = "https://chipverse-backend.onrender.com";
+  const MAX_WAIT = 60_000; // 60s max
+  const POLL = 3_000;      // check every 3s
+  const start = Date.now();
+
+  setStatus?.("Waking up server… (first login may take ~30s)");
+
+  while (Date.now() - start < MAX_WAIT) {
+    try {
+      const res = await fetch(`${BACKEND}/health`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok || res.status === 404) {
+        // 404 means server is awake (no /health route = still responding)
+        setStatus?.("Server ready! Redirecting…");
+        await new Promise(r => setTimeout(r, 500));
+        return;
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, POLL));
+  }
+  setStatus?.("Redirecting…");
+}
+
+
 /* ─── Chip Illustration ─── */
 function ChipIllustration({ small = false }: { small?: boolean }) {
   const scale = small ? 0.75 : 1;
@@ -403,10 +428,12 @@ function LoginForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     }
   };
 
-  const handleSocial = (name: string) => {
+  const handleSocial = async (name: string) => {
     if (name === "Google") {
+      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
+      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setShowOtp(true);
@@ -508,10 +535,12 @@ function RegisterForm({ onSuccess }: { onSuccess: (name: string) => void }) {
     }
   };
 
-  const handleSocial = (name: string) => {
+  const handleSocial = async (name: string) => {
     if (name === "Google") {
+      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/google`;
     } else if (name === "LinkedIn") {
+      await wakeBackend(setToast);
       window.location.href = `https://chipverse-backend.onrender.com/api/auth/linkedin`;
     } else if (name === "OTP") {
       setShowOtp(true);
