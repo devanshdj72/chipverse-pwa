@@ -9,13 +9,16 @@ import { AdminProvider } from "@/hooks/useAdmin";
 // Backend redirects to /?oauth_token=xxx after Google/LinkedIn auth
 (function handleOAuthRedirect() {
   const params = new URLSearchParams(window.location.search);
-  const token  = params.get('oauth_token');
-  const error  = params.get('oauth_error');
+  const token   = params.get('oauth_token');
+  const refresh = params.get('oauth_refresh');
+  const error   = params.get('oauth_error');
   console.log('[OAuth] URL params:', window.location.search);
   console.log('[OAuth] token:', token ? token.substring(0,20)+'...' : 'none');
   console.log('[OAuth] error:', error);
   if (token) {
     localStorage.setItem('chipverse_oauth_token', token);
+    // Store refresh token so session persists on page reload
+    if (refresh) localStorage.setItem('chipverse_refresh_token', refresh);
     sessionStorage.setItem('oauth_redirect', '/dashboard');
     window.history.replaceState({}, '', '/chipverse-pwa/');
   } else if (error) {
