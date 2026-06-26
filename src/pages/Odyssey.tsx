@@ -11,7 +11,11 @@ export default function Odyssey() {
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === "odyssey_complete") {
         localStorage.setItem(ODYSSEY_KEY, "true");
-        setLocation("/domains");
+        // If replaying (already seen before), go back to dashboard
+        // If first time, go to domains
+        const referrer = sessionStorage.getItem('odyssey_referrer') || '/domains';
+        sessionStorage.removeItem('odyssey_referrer');
+        setLocation(referrer);
       }
     };
     window.addEventListener("message", handleMessage);

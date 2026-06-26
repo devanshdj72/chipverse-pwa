@@ -102,6 +102,15 @@ export default function Navbar() {
     { href: "/subscription", label: "⚡ Plans" },
   ] : [];
 
+  const handleOdysseyReplay = () => {
+    // Store current path so Odyssey returns here after replay
+    sessionStorage.setItem('odyssey_referrer', '/dashboard');
+    // Clear the seen flag so Odyssey plays again
+    localStorage.removeItem("chipverse_odyssey_seen");
+    setLocation("/odyssey");
+    setIsOpen(false);
+  };
+
   const handleLogout = async () => { await logout(); setIsOpen(false); setLocation("/login"); };
 
   const notifIcons: Record<string, string> = {
@@ -222,6 +231,12 @@ export default function Navbar() {
                   )}
                 </Link>
 
+                <button onClick={handleOdysseyReplay}
+                  title="Replay VLSI Odyssey"
+                  className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20">
+                  ⬡ Odyssey
+                </button>
+
                 <button onClick={handleLogout}
                   className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20">
                   <LogOut className="w-4 h-4" /> Logout
@@ -279,6 +294,11 @@ export default function Navbar() {
                   )}
                   {pendingCount > 0 && <span className="text-xs text-orange-400">({pendingCount} friend request{pendingCount > 1 ? "s" : ""})</span>}
                 </Link>
+                <button onClick={handleOdysseyReplay}
+                  className="flex items-center gap-2 text-base font-semibold rounded-lg px-3 py-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 w-fit">
+                  ⬡ Replay Odyssey
+                </button>
+
                 <button onClick={handleLogout} className="flex items-center gap-2 text-base font-semibold rounded-lg px-3 py-2 bg-red-500/10 border border-red-500/30 text-red-400 w-fit">
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
