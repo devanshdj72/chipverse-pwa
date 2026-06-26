@@ -90,14 +90,16 @@ function useUserInternal() {
         localStorage.removeItem('chipverse_oauth_token');
         sessionStorage.removeItem('oauth_redirect');
         setAccessToken(oauthToken);
+        // Small delay to ensure token is set before API calls
+        await new Promise(r => setTimeout(r, 100));
         try {
           const [meRes, profile] = await Promise.all([api.auth.me(), loadProfile()]);
           setState({ user: meRes.data, profile, isLoading: false, isAuthenticated: true });
-        } catch {
-          // Even if me() fails, mark as authenticated with the token
+        } catch (e) {
+          console.error('[OAuth] me() failed:', e);
           setState(s => ({ ...s, isLoading: false, isAuthenticated: true }));
         }
-        // Always redirect to dashboard after OAuth
+        // Redirect to dashboard with full page load so token is in memory
         window.location.href = '/chipverse-pwa/dashboard';
         return;
       }
