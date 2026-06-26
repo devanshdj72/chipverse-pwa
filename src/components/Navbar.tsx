@@ -147,10 +147,10 @@ export default function Navbar() {
             <span className="font-bold text-xl tracking-wider font-['Orbitron']">ChipVerse</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
             {links.map((link) => (
               <Link key={link.href} href={link.href}
-                className={cn("text-sm font-medium transition-colors hover:text-white",
+                className={cn("text-xs font-medium transition-colors hover:text-white tracking-wide uppercase",
                   location.startsWith(link.href) ? "text-white border-b-2 border-blue-500" : "text-gray-400")}>
                 {link.label}
               </Link>
@@ -231,16 +231,24 @@ export default function Navbar() {
                   )}
                 </Link>
 
-                <button onClick={handleOdysseyReplay}
-                  title="Replay VLSI Odyssey"
-                  className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20">
-                  ⬡ Odyssey
-                </button>
-
-                <button onClick={handleLogout}
-                  className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20">
-                  <LogOut className="w-4 h-4" /> Logout
-                </button>
+                <div className="relative group">
+                  <button className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white">
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="hidden lg:inline">More</span>
+                    <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  <div className="absolute right-0 top-[calc(100%+8px)] w-44 bg-[#0d0d18] border border-white/10 rounded-xl shadow-2xl overflow-hidden opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-50">
+                    <button onClick={handleOdysseyReplay}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors text-left">
+                      <span className="text-base">⬡</span> Replay Odyssey
+                    </button>
+                    <div className="border-t border-white/8" />
+                    <button onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left">
+                      <LogOut className="w-4 h-4" /> Logout
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <Link href="/login" className={cn("flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all",
