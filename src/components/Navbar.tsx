@@ -160,11 +160,13 @@ export default function Navbar() {
           {isAuthenticated && <div className="mx-5 my-3 border-t border-white/8" />}
 
           {/* Odyssey */}
-          {isAuthenticated && <button onClick={handleOdysseyReplay}
-            className="w-full flex items-center gap-3 px-5 py-2.5 mx-0 text-sm font-medium text-purple-400 hover:bg-purple-500/8 hover:text-purple-300 transition-all group">
-            <Rocket className="w-[18px] h-[18px] shrink-0" size={18} />
-            <span>VLSI Odyssey</span>
-          </button>
+          {isAuthenticated && (
+            <button onClick={handleOdysseyReplay}
+              className="w-full flex items-center gap-3 px-5 py-2.5 mx-0 text-sm font-medium text-purple-400 hover:bg-purple-500/8 hover:text-purple-300 transition-all group">
+              <Rocket className="w-[18px] h-[18px] shrink-0" size={18} />
+              <span>VLSI Odyssey</span>
+            </button>
+          )}
         </nav>
 
         {/* User section */}
