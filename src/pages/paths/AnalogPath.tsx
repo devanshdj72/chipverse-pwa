@@ -54,7 +54,7 @@ export default function AnalogPath() {
   const [activeLevelIdx, setActiveLevelIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/data/analog-sublevels.json").then(r => r.json()).then(setAnalogSubLevels).catch(console.error);
+    fetch(`${import.meta.env.BASE_URL}data/analog-sublevels.json`).then(r => r.json()).then(setAnalogSubLevels).catch(console.error);
   }, []);
 
   useEffect(() => { saveProgress(progress); }, [progress]);

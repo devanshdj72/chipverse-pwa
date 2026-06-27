@@ -54,7 +54,7 @@ export default function FPGAPath() {
   const [activeLevelIdx, setActiveLevelIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/data/fpga-sublevels.json").then(r => r.json()).then(setFpgaSubLevels).catch(console.error);
+    fetch(`${import.meta.env.BASE_URL}data/fpga-sublevels.json`).then(r => r.json()).then(setFpgaSubLevels).catch(console.error);
   }, []);
 
   useEffect(() => { saveProgress(progress); }, [progress]);

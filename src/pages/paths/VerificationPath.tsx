@@ -54,7 +54,7 @@ export default function VerificationPath() {
   const [activeLevelIdx, setActiveLevelIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/data/verification-sublevels.json")
+    fetch(`${import.meta.env.BASE_URL}data/verification-sublevels.json`)
       .then((r) => r.json())
       .then(setVerSubLevels)
       .catch(console.error);

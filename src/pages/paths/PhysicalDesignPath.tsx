@@ -64,7 +64,7 @@ export default function PhysicalDesignPath() {
   const [activeLevelIdx, setActiveLevelIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/data/physical-design-sublevels.json").then(r => r.json()).then(setPdSubLevels).catch(console.error);
+    fetch(`${import.meta.env.BASE_URL}data/physical-design-sublevels.json`).then(r => r.json()).then(setPdSubLevels).catch(console.error);
   }, []);
 
   useEffect(() => { saveProgress(progress); }, [progress]);

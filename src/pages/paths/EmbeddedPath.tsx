@@ -54,7 +54,7 @@ export default function EmbeddedPath() {
   const [activeLevelIdx, setActiveLevelIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/data/embedded-sublevels.json").then(r => r.json()).then(setEmbSubLevels).catch(console.error);
+    fetch(`${import.meta.env.BASE_URL}data/embedded-sublevels.json`).then(r => r.json()).then(setEmbSubLevels).catch(console.error);
   }, []);
 
   useEffect(() => { saveProgress(progress); }, [progress]);
