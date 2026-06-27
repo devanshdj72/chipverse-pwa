@@ -125,7 +125,7 @@ export default function Navbar() {
       )}
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className={cn(
+      {isAuthenticated && <aside className={cn(
         "fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300",
         "bg-[#08080f] border-r border-white/8",
         "w-[220px]",
@@ -137,9 +137,9 @@ export default function Navbar() {
           <span className="font-bold text-lg tracking-wider font-['Orbitron'] text-white">ChipVerse</span>
         </Link>
 
-        {/* Nav links */}
+        {/* Nav links — only when logged in */}
         <nav className="flex-1 py-4 overflow-y-auto">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {isAuthenticated && NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = location.startsWith(href);
             return (
               <Link key={href} href={href}
@@ -157,10 +157,10 @@ export default function Navbar() {
           })}
 
           {/* Divider */}
-          <div className="mx-5 my-3 border-t border-white/8" />
+          {isAuthenticated && <div className="mx-5 my-3 border-t border-white/8" />}
 
           {/* Odyssey */}
-          <button onClick={handleOdysseyReplay}
+          {isAuthenticated && <button onClick={handleOdysseyReplay}
             className="w-full flex items-center gap-3 px-5 py-2.5 mx-0 text-sm font-medium text-purple-400 hover:bg-purple-500/8 hover:text-purple-300 transition-all group">
             <Rocket className="w-[18px] h-[18px] shrink-0" size={18} />
             <span>VLSI Odyssey</span>
@@ -194,7 +194,7 @@ export default function Navbar() {
             </Link>
           </div>
         )}
-      </aside>
+      </aside>}
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 md:left-[220px] right-0 z-40 h-14 bg-black/60 backdrop-blur-md border-b border-white/8 flex items-center px-4 gap-3">

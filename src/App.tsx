@@ -31,17 +31,19 @@ import AdminResources from "@/pages/admin/AdminResources";
 import Odyssey from "@/pages/Odyssey";
 import CustomCursor from "@/components/CustomCursor";
 import OdysseyGuard from "@/components/OdysseyGuard";
+import { useUserContext } from "@/lib/user";
 
 const isAdminRoute   = () => window.location.pathname.startsWith("/admin");
 const isOdysseyRoute = () => window.location.pathname === "/odyssey";
 const hideChrome     = () => isAdminRoute() || isOdysseyRoute();
 
 export default function App() {
+  const { isAuthenticated } = useUserContext();
   return (
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       {!hideChrome() && <Navbar />}
       <OdysseyGuard>
-      <main className="min-h-screen bg-black pt-14 sidebar-offset">
+      <main className={`min-h-screen bg-black pt-14${isAuthenticated ? " sidebar-offset" : ""}`}>
         <Switch>
           <Route path="/"                         component={Landing} />
           <Route path="/odyssey"                  component={Odyssey} />
