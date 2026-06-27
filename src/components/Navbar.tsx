@@ -129,7 +129,6 @@ export default function Navbar() {
         "fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300",
         "bg-[#08080f] border-r border-white/8",
         "w-[220px]",
-        // Desktop: always visible, collapsed to icons only
         "hidden md:flex",
       )}>
         {/* Logo */}
@@ -213,11 +212,14 @@ export default function Navbar() {
         <div className="flex-1" />
 
         {isAuthenticated ? (
-          <div className="flex items-center gap-1.5">
-            {/* XP + Streak pill */}
-            <div className="hidden sm:flex items-center gap-3 px-3 py-1 rounded-full bg-white/5 border border-white/8 text-xs font-semibold">
-              <span className="text-yellow-400">⚡ {profile?.xp ?? 0} XP</span>
-              <span className="text-orange-400">🔥 {profile?.streak ?? 0}</span>
+          <div className="flex items-center gap-2">
+            {/* XP pill */}
+            <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/5 border border-white/8 text-xs font-semibold shrink-0">
+              <span className="text-yellow-400">⚡</span>
+              <span className="text-white">{profile?.xp ?? 0}</span>
+              <span className="text-gray-500 mx-1">·</span>
+              <span className="text-orange-400">🔥</span>
+              <span className="text-white">{profile?.streak ?? 0}</span>
             </div>
 
             {/* Messages */}
