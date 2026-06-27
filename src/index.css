@@ -168,3 +168,10 @@
   from { transform: scale(0); opacity: 1; }
   to { transform: scale(4); opacity: 0; }
 }
+
+/* Sidebar layout offset */
+@media (min-width: 768px) {
+  .sidebar-offset {
+    padding-left: 220px;
+  }
+}
