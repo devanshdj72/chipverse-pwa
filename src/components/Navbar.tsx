@@ -1,55 +1,53 @@
 import { Link, useLocation } from "wouter";
 import { useUserContext } from "@/lib/user";
-import { Microchip, Menu, X, LogIn, LogOut, Bell, MessageSquare } from "lucide-react";
+import { Microchip, LogIn, LogOut, Bell, MessageSquare, LayoutDashboard, BookOpen, Trophy, Sword, Briefcase, Zap, User, Menu, X, Rocket } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { useNotifications } from "@/lib/useNotifications";
 import { getSocket } from "@/lib/socket";
-import XPStreakWidget from "@/components/XPStreakWidget";
 
-interface ToastMsg {
-  id: string;
-  senderName: string;
-  content: string;
-  conversationId: string;
-}
+// ── Toast types ───────────────────────────────────────────────────────────────
+interface Toast { id: string; senderName: string; content: string; avatar?: string }
 
-function MessageToast({ toast, onClose, onClick }: {
-  toast: ToastMsg; onClose: () => void; onClick: () => void;
-}) {
-  useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, []);
+function MessageToast({ toast, onClose, onClick }: { toast: Toast; onClose: () => void; onClick: () => void }) {
+  useEffect(() => { const t = setTimeout(onClose, 5000); return () => clearTimeout(t); }, [onClose]);
   return (
-    <div onClick={onClick}
-      className="flex items-center gap-3 bg-[#0d0d1a] border border-white/15 rounded-2xl px-4 py-3 shadow-2xl cursor-pointer hover:bg-white/5 transition-all"
-      style={{ animation: "slideInToast 0.3s ease-out", minWidth: "260px", maxWidth: "320px" }}>
-      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+    <div onClick={onClick} style={{ animation: "slideInToast 0.3s ease-out" }}
+      className="flex items-center gap-3 bg-[#0f0f1a] border border-white/15 rounded-xl px-4 py-3 cursor-pointer shadow-2xl max-w-xs">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
         {toast.senderName.charAt(0).toUpperCase()}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-white font-semibold text-sm truncate">{toast.senderName}</div>
-        <div className="text-gray-400 text-xs truncate mt-0.5">{toast.content}</div>
+      <div className="min-w-0">
+        <p className="text-white text-xs font-semibold truncate">{toast.senderName}</p>
+        <p className="text-gray-400 text-xs truncate">{toast.content}</p>
       </div>
-      <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-gray-600 hover:text-gray-400 flex-shrink-0 ml-1">
-        <X className="w-3.5 h-3.5" />
-      </button>
     </div>
   );
 }
 
+// ── Nav items ─────────────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { href: "/dashboard",    label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/domains",      label: "Domains",     icon: BookOpen },
+  { href: "/leaderboard",  label: "Leaderboard", icon: Trophy },
+  { href: "/battlefield",  label: "Battle",      icon: Sword },
+  { href: "/placement",    label: "Placement",   icon: Briefcase },
+  { href: "/subscription", label: "Plans",       icon: Zap },
+  { href: "/profile",      label: "Profile",     icon: User },
+];
+
 export default function Navbar() {
-  const [location] = useLocation();
-  const { user, profile, isAuthenticated, logout } = useUserContext();
-  const [isOpen, setIsOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const { isAuthenticated, user, profile, logout } = useUserContext();
+  const [location, setLocation] = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen]     = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
-  const [, setLocation] = useLocation();
-  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const { notifications, unreadCount, markAllRead, markOneRead } = useNotifications();
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const { notifications, unreadCount, markAllRead, markOneRead } = useNotifications(isAuthenticated);
-
+  // Close notif dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
@@ -58,60 +56,40 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Unread messages count
   useEffect(() => {
     if (!isAuthenticated) return;
-    const load = async () => {
-      try { const res = await api.friends.getRequests(); setPendingCount((res.data ?? []).length); } catch {}
-    };
-    load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
+    api.chat.getConversations().then(r => {
+      const total = (r.data as any[]).reduce((s: number, c: any) => s + (c.unreadCount ?? 0), 0);
+      setUnreadMessages(total);
+    }).catch(() => {});
+  }, [isAuthenticated, location]);
 
+  // Socket message toasts
   useEffect(() => {
+    if (!isAuthenticated) return;
     const socket = getSocket();
-    if (!socket || !isAuthenticated) return;
-    const onMessage = (msg: any) => {
-      if (!window.location.pathname.includes("/messages")) {
-        setUnreadMessages((n) => n + 1);
-        setToasts((prev) => [...prev.slice(-2), {
-          id: `toast-${Date.now()}`,
-          senderName: msg?.sender?.name ?? "Someone",
-          content: msg?.content ?? "Sent you a message",
-          conversationId: msg?.conversationId ?? "",
-        }]);
-      }
+    if (!socket) return;
+    const handler = (msg: any) => {
+      if (window.location.pathname.includes("/messages")) return;
+      const id = Math.random().toString(36).slice(2);
+      setToasts(p => [...p.slice(-2), { id, senderName: msg.senderName ?? "Someone", content: msg.content ?? "" }]);
+      setUnreadMessages(p => p + 1);
     };
-    socket.on("receive_message", onMessage);
-    return () => { socket.off("receive_message", onMessage); };
+    socket.on("new_message", handler);
+    return () => { socket.off("new_message", handler); };
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    if (location.startsWith("/messages")) { setUnreadMessages(0); setToasts([]); }
-  }, [location]);
+  const removeToast = (id: string) => setToasts(p => p.filter(t => t.id !== id));
 
-  const removeToast = (id: string) => setToasts((prev) => prev.filter((t) => t.id !== id));
-
-  // ── Achievements removed from navbar ──────────────────────────────────────
-  const links = isAuthenticated ? [
-    { href: "/domains",     label: "Domains" },
-    { href: "/dashboard",   label: "Dashboard" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/battlefield", label: "⚔️ Battle" },
-    { href: "/placement",   label: "Placement" },
-    { href: "/subscription", label: "⚡ Plans" },
-  ] : [];
+  const handleLogout = async () => { await logout(); setSidebarOpen(false); setLocation("/login"); };
 
   const handleOdysseyReplay = () => {
-    // Store current path so Odyssey returns here after replay
-    sessionStorage.setItem('odyssey_referrer', '/dashboard');
-    // Clear the seen flag so Odyssey plays again
+    sessionStorage.setItem("odyssey_referrer", "/dashboard");
     localStorage.removeItem("chipverse_odyssey_seen");
     setLocation("/odyssey");
-    setIsOpen(false);
+    setSidebarOpen(false);
   };
-
-  const handleLogout = async () => { await logout(); setIsOpen(false); setLocation("/login"); };
 
   const notifIcons: Record<string, string> = {
     friend_request: "👥", friend_accepted: "✅",
@@ -120,8 +98,7 @@ export default function Navbar() {
 
   const getNotifRoute = (type: string) => {
     if (["friend_request", "friend_accepted"].includes(type)) return "/profile";
-    if (["battle_challenge", "battle_accepted", "battle_result"].includes(type)) return "/battlefield";
-    return "/";
+    return "/battlefield";
   };
 
   const handleNotifClick = async (n: { id: string; type: string; isRead: boolean }) => {
@@ -132,193 +109,231 @@ export default function Navbar() {
 
   return (
     <>
-      <div style={{ position: "fixed", bottom: "24px", right: "20px", zIndex: 9999, display: "flex", flexDirection: "column", gap: "10px", alignItems: "flex-end", pointerEvents: toasts.length === 0 ? "none" : "auto" }}>
-        <style>{`@keyframes slideInToast { from { opacity:0; transform:translateX(60px) scale(0.95); } to { opacity:1; transform:translateX(0) scale(1); } }`}</style>
-        {toasts.map((toast) => (
-          <MessageToast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)}
-            onClick={() => { removeToast(toast.id); setLocation("/messages"); }} />
+      {/* ── Toast container ─────────────────────────────────────────────── */}
+      <div className="fixed bottom-6 right-5 z-[9999] flex flex-col gap-2.5 items-end pointer-events-none">
+        <style>{`@keyframes slideInToast { from { opacity:0; transform:translateX(60px); } to { opacity:1; transform:translateX(0); } }`}</style>
+        {toasts.map(t => (
+          <div key={t.id} className="pointer-events-auto">
+            <MessageToast toast={t} onClose={() => removeToast(t.id)} onClick={() => { removeToast(t.id); setLocation("/messages"); }} />
+          </div>
         ))}
       </div>
 
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-white hover:text-blue-400 transition-colors">
-            <Microchip className="w-6 h-6 text-blue-500" />
-            <span className="font-bold text-xl tracking-wider font-['Orbitron']">ChipVerse</span>
-          </Link>
+      {/* ── Sidebar overlay (mobile) ─────────────────────────────────────── */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-          <div className="hidden md:flex items-center gap-4">
-            {links.map((link) => (
-              <Link key={link.href} href={link.href}
-                className={cn("text-xs font-medium transition-colors hover:text-white tracking-wide uppercase",
-                  location.startsWith(link.href) ? "text-white border-b-2 border-blue-500" : "text-gray-400")}>
-                {link.label}
+      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+      <aside className={cn(
+        "fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300",
+        "bg-[#08080f] border-r border-white/8",
+        "w-[220px]",
+        // Desktop: always visible, collapsed to icons only
+        "hidden md:flex",
+      )}>
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2.5 px-5 py-5 border-b border-white/8 hover:opacity-80 transition-opacity">
+          <Microchip className="w-6 h-6 text-blue-500 shrink-0" />
+          <span className="font-bold text-lg tracking-wider font-['Orbitron'] text-white">ChipVerse</span>
+        </Link>
+
+        {/* Nav links */}
+        <nav className="flex-1 py-4 overflow-y-auto">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = location.startsWith(href);
+            return (
+              <Link key={href} href={href}
+                className={cn(
+                  "flex items-center gap-3 px-5 py-2.5 mx-2 rounded-xl text-sm font-medium transition-all duration-150 group",
+                  active
+                    ? "bg-blue-500/15 text-blue-400 border border-blue-500/20"
+                    : "text-gray-500 hover:text-white hover:bg-white/5"
+                )}>
+                <Icon className={cn("w-4.5 h-4.5 shrink-0", active ? "text-blue-400" : "text-gray-500 group-hover:text-white")} size={18} />
+                <span>{label}</span>
+                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
               </Link>
-            ))}
+            );
+          })}
 
-            {isAuthenticated && <XPStreakWidget xp={profile.xp} streak={profile.streak} />}
+          {/* Divider */}
+          <div className="mx-5 my-3 border-t border-white/8" />
 
-            {isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <Link href="/messages" className="relative p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all">
-                  <MessageSquare className="w-5 h-5" />
-                  {unreadMessages > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
-                      {unreadMessages > 9 ? "9+" : unreadMessages}
-                    </span>
-                  )}
-                </Link>
+          {/* Odyssey */}
+          <button onClick={handleOdysseyReplay}
+            className="w-full flex items-center gap-3 px-5 py-2.5 mx-0 text-sm font-medium text-purple-400 hover:bg-purple-500/8 hover:text-purple-300 transition-all group">
+            <Rocket className="w-[18px] h-[18px] shrink-0" size={18} />
+            <span>VLSI Odyssey</span>
+          </button>
+        </nav>
 
-                <div className="relative" ref={notifRef}>
-                  <button onClick={() => { setNotifOpen((v) => !v); if (!notifOpen && unreadCount > 0) markAllRead(); }}
-                    className="relative p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all">
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
-                        {unreadCount > 9 ? "9+" : unreadCount}
-                      </span>
-                    )}
-                  </button>
-                  {notifOpen && (
-                    <div className="absolute right-0 top-[calc(100%+10px)] w-80 bg-[#0a0a12] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
-                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Notifications</span>
-                        {notifications.some((n) => !n.isRead) && (
-                          <button onClick={markAllRead} className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors">Mark all read</button>
-                        )}
-                      </div>
-                      <div className="max-h-80 overflow-y-auto">
-                        {notifications.length === 0
-                          ? <div className="px-4 py-8 text-center text-gray-600 text-sm">No notifications yet</div>
-                          : notifications.map((n) => (
-                            <div key={n.id} onClick={() => handleNotifClick(n)}
-                              className={cn("flex gap-3 px-4 py-3 border-b border-white/5 cursor-pointer transition-colors hover:bg-white/5", !n.isRead && "bg-blue-500/5")}>
-                              <span className="text-lg flex-shrink-0 mt-0.5">{notifIcons[n.type] ?? "🔔"}</span>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-white leading-tight">{n.title}</div>
-                                <div className="text-xs text-gray-400 mt-0.5 leading-snug">{n.message}</div>
-                                <div className="text-[10px] text-gray-600 mt-1">
-                                  {new Date(n.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                {!n.isRead && <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5" />}
-                                <span className="text-[9px] text-gray-600 mt-auto">
-                                  {["friend_request","friend_accepted"].includes(n.type) ? "→ Profile" : "→ Battle"}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                      {notifications.length > 0 && (
-                        <div className="px-4 py-2 border-t border-white/8 text-center">
-                          <span className="text-[10px] text-gray-600">{notifications.length} notification{notifications.length !== 1 ? "s" : ""}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <Link href="/profile" className="relative flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  {user.name}
-                  {pendingCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-orange-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                      {pendingCount > 9 ? "9+" : pendingCount}
-                    </span>
-                  )}
-                </Link>
-
-                <div className="relative group">
-                  <button className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white">
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span className="hidden lg:inline">More</span>
-                    <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  <div className="absolute right-0 top-[calc(100%+8px)] w-44 bg-[#0d0d18] border border-white/10 rounded-xl shadow-2xl overflow-hidden opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 z-50">
-                    <button onClick={handleOdysseyReplay}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors text-left">
-                      <span className="text-base">⬡</span> Replay Odyssey
-                    </button>
-                    <div className="border-t border-white/8" />
-                    <button onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left">
-                      <LogOut className="w-4 h-4" /> Logout
-                    </button>
-                  </div>
-                </div>
+        {/* User section */}
+        {isAuthenticated ? (
+          <div className="border-t border-white/8 p-3">
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/4 mb-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
               </div>
-            ) : (
-              <Link href="/login" className={cn("flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 border transition-all",
-                location === "/login" ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-300" : "bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400/50")}>
-                <LogIn className="w-4 h-4" /> Login
-              </Link>
-            )}
+              <div className="min-w-0 flex-1">
+                <p className="text-white text-xs font-semibold truncate">{user?.name ?? "User"}</p>
+                <p className="text-gray-500 text-[10px] truncate">{profile?.xp ?? 0} XP · {profile?.streak ?? 0} 🔥</p>
+              </div>
+            </div>
+            <button onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-red-400 hover:bg-red-500/8 transition-all">
+              <LogOut size={14} />
+              <span>Logout</span>
+            </button>
           </div>
+        ) : (
+          <div className="border-t border-white/8 p-3">
+            <Link href="/login"
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/15 transition-all">
+              <LogIn size={16} />
+              <span>Login</span>
+            </Link>
+          </div>
+        )}
+      </aside>
 
-          <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X /> : <Menu />}
+      {/* ── Top bar ───────────────────────────────────────────────────────── */}
+      <header className="fixed top-0 left-0 md:left-[220px] right-0 z-40 h-14 bg-black/60 backdrop-blur-md border-b border-white/8 flex items-center px-4 gap-3">
+        {/* Mobile hamburger */}
+        <button className="md:hidden text-gray-400 hover:text-white transition-colors" onClick={() => setSidebarOpen(true)}>
+          <Menu size={20} />
+        </button>
+
+        {/* Mobile logo */}
+        <Link href="/" className="md:hidden flex items-center gap-2">
+          <Microchip className="w-5 h-5 text-blue-500" />
+          <span className="font-bold text-base font-['Orbitron'] text-white">ChipVerse</span>
+        </Link>
+
+        <div className="flex-1" />
+
+        {isAuthenticated ? (
+          <div className="flex items-center gap-1.5">
+            {/* XP + Streak pill */}
+            <div className="hidden sm:flex items-center gap-3 px-3 py-1 rounded-full bg-white/5 border border-white/8 text-xs font-semibold">
+              <span className="text-yellow-400">⚡ {profile?.xp ?? 0} XP</span>
+              <span className="text-orange-400">🔥 {profile?.streak ?? 0}</span>
+            </div>
+
+            {/* Messages */}
+            <Link href="/messages"
+              className="relative p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/8 transition-all">
+              <MessageSquare size={18} />
+              {unreadMessages > 0 && (
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-green-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center">
+                  {unreadMessages > 9 ? "9+" : unreadMessages}
+                </span>
+              )}
+            </Link>
+
+            {/* Notifications */}
+            <div className="relative" ref={notifRef}>
+              <button onClick={() => { setNotifOpen(v => !v); if (!notifOpen && unreadCount > 0) markAllRead(); }}
+                className="relative p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/8 transition-all">
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-[calc(100%+8px)] w-80 bg-[#0a0a12] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Notifications</span>
+                    {notifications.some(n => !n.isRead) && (
+                      <button onClick={markAllRead} className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors">Mark all read</button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0
+                      ? <div className="px-4 py-8 text-center text-gray-600 text-sm">No notifications yet</div>
+                      : notifications.map(n => (
+                        <div key={n.id} onClick={() => handleNotifClick(n)}
+                          className={cn("flex gap-3 px-4 py-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors", !n.isRead && "bg-blue-500/5")}>
+                          <span className="text-lg shrink-0 mt-0.5">{notifIcons[n.type] ?? "🔔"}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white leading-tight">{n.title}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{n.message}</p>
+                          </div>
+                          {!n.isRead && <div className="w-2 h-2 rounded-full bg-blue-400 mt-2 shrink-0" />}
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Avatar */}
+            <Link href="/profile" className="flex items-center gap-2 pl-1">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+              </div>
+            </Link>
+          </div>
+        ) : (
+          <Link href="/login"
+            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/15 transition-all">
+            <LogIn size={15} />
+            Login
+          </Link>
+        )}
+      </header>
+
+      {/* ── Mobile sidebar ────────────────────────────────────────────────── */}
+      <aside className={cn(
+        "fixed top-0 left-0 h-full z-50 flex flex-col md:hidden transition-transform duration-300 w-[240px]",
+        "bg-[#08080f] border-r border-white/8",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+          <div className="flex items-center gap-2">
+            <Microchip className="w-5 h-5 text-blue-500" />
+            <span className="font-bold text-base font-['Orbitron'] text-white">ChipVerse</span>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="text-gray-500 hover:text-white">
+            <X size={18} />
           </button>
         </div>
 
-        {isOpen && (
-          <div className="md:hidden bg-black/95 border-b border-white/10 px-4 py-4 space-y-4">
-            {links.map((link) => (
-              <Link key={link.href} href={link.href}
-                className={cn("block text-lg font-medium transition-colors", location.startsWith(link.href) ? "text-blue-400" : "text-gray-400")}
-                onClick={() => setIsOpen(false)}>
-                {link.label}
+        <nav className="flex-1 py-3 overflow-y-auto">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = location.startsWith(href);
+            return (
+              <Link key={href} href={href} onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-5 py-2.5 mx-2 rounded-xl text-sm font-medium transition-all",
+                  active ? "bg-blue-500/15 text-blue-400" : "text-gray-500 hover:text-white hover:bg-white/5"
+                )}>
+                <Icon size={18} />
+                <span>{label}</span>
               </Link>
-            ))}
-            {isAuthenticated && (
-              <Link href="/messages" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-lg font-medium text-gray-400 hover:text-white">
-                <MessageSquare className="w-5 h-5" /> Messages
-                {unreadMessages > 0 && (
-                  <span className="w-5 h-5 bg-green-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                    {unreadMessages > 9 ? "9+" : unreadMessages}
-                  </span>
-                )}
-              </Link>
-            )}
-            {isAuthenticated && (
-              <div className="py-1"><XPStreakWidget xp={profile.xp} streak={profile.streak} /></div>
-            )}
-            {isAuthenticated && unreadCount > 0 && (
-              <button onClick={() => { markAllRead(); setIsOpen(false); setLocation("/battlefield"); }}
-                className="flex items-center gap-2 text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 w-fit">
-                <Bell className="w-4 h-4" /> {unreadCount} new notification{unreadCount !== 1 ? "s" : ""}
-              </button>
-            )}
-            {isAuthenticated ? (
-              <div className="flex flex-col gap-2">
-                <Link href="/profile" onClick={() => setIsOpen(false)} className="relative flex items-center gap-2 text-sm text-gray-300 font-medium w-fit">
-                  👤 {user.name}
-                  {pendingCount > 0 && (
-                    <span className="w-5 h-5 bg-orange-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                      {pendingCount > 9 ? "9+" : pendingCount}
-                    </span>
-                  )}
-                  {pendingCount > 0 && <span className="text-xs text-orange-400">({pendingCount} friend request{pendingCount > 1 ? "s" : ""})</span>}
-                </Link>
-                <button onClick={handleOdysseyReplay}
-                  className="flex items-center gap-2 text-base font-semibold rounded-lg px-3 py-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 w-fit">
-                  ⬡ Replay Odyssey
-                </button>
+            );
+          })}
+          <div className="mx-5 my-3 border-t border-white/8" />
+          <button onClick={handleOdysseyReplay}
+            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-purple-400 hover:bg-purple-500/8 transition-all">
+            <Rocket size={18} />
+            <span>VLSI Odyssey</span>
+          </button>
+        </nav>
 
-                <button onClick={handleLogout} className="flex items-center gap-2 text-base font-semibold rounded-lg px-3 py-2 bg-red-500/10 border border-red-500/30 text-red-400 w-fit">
-                  <LogOut className="w-4 h-4" /> Logout
-                </button>
-              </div>
-            ) : (
-              <Link href="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-base font-semibold rounded-lg px-3 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 w-fit">
-                <LogIn className="w-4 h-4" /> Login / Register
-              </Link>
-            )}
+        {isAuthenticated && (
+          <div className="border-t border-white/8 p-3">
+            <button onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/8 transition-all">
+              <LogOut size={15} />
+              <span>Logout</span>
+            </button>
           </div>
         )}
-      </nav>
+      </aside>
     </>
   );
 }

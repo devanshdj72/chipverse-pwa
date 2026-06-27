@@ -41,7 +41,7 @@ export default function App() {
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       {!hideChrome() && <Navbar />}
       <OdysseyGuard>
-      <main className="min-h-screen bg-black">
+      <main className="min-h-screen bg-black md:pl-[220px] pt-14">
         <Switch>
           <Route path="/"                         component={Landing} />
           <Route path="/odyssey"                  component={Odyssey} />
