@@ -5,7 +5,6 @@ import OdysseyGuard from "@/components/OdysseyGuard";
 import AIAssistant from "@/components/AIAssistant";
 import CustomCursor from "@/components/CustomCursor";
 
-// Pages
 import Landing           from "@/pages/Landing";
 import Odyssey           from "@/pages/Odyssey";
 import Login             from "@/pages/Login";
@@ -17,24 +16,24 @@ import AdminLogin        from "@/pages/admin/AdminLogin";
 import AdminDashboard    from "@/pages/admin/AdminDashboard";
 import AdminResources    from "@/pages/admin/AdminResources";
 
-const Domains         = lazy(() => import("@/pages/Domains"));
-const Dashboard       = lazy(() => import("@/pages/Dashboard"));
-const Leaderboard     = lazy(() => import("@/pages/Leaderboard"));
-const BattleField     = lazy(() => import("@/pages/BattleField"));
-const BattleRoom      = lazy(() => import("@/pages/BattleRoom"));
-const Achievements    = lazy(() => import("@/pages/Achievements"));
-const Placement       = lazy(() => import("@/pages/Placement"));
-const Profile         = lazy(() => import("@/pages/Profile"));
-const Messages        = lazy(() => import("@/pages/Messages"));
-const DomainReport    = lazy(() => import("@/pages/DomainReport"));
-const RTLPath         = lazy(() => import("@/pages/paths/RTLPath"));
-const VerificationPath= lazy(() => import("@/pages/paths/VerificationPath"));
+const Domains            = lazy(() => import("@/pages/Domains"));
+const Dashboard          = lazy(() => import("@/pages/Dashboard"));
+const Leaderboard        = lazy(() => import("@/pages/Leaderboard"));
+const BattleField        = lazy(() => import("@/pages/BattleField"));
+const BattleRoom         = lazy(() => import("@/pages/BattleRoom"));
+const Achievements       = lazy(() => import("@/pages/Achievements"));
+const Placement          = lazy(() => import("@/pages/Placement"));
+const Profile            = lazy(() => import("@/pages/Profile"));
+const Messages           = lazy(() => import("@/pages/Messages"));
+const DomainReport       = lazy(() => import("@/pages/DomainReport"));
+const RTLPath            = lazy(() => import("@/pages/paths/RTLPath"));
+const VerificationPath   = lazy(() => import("@/pages/paths/VerificationPath"));
 const PhysicalDesignPath = lazy(() => import("@/pages/paths/PhysicalDesignPath"));
-const AnalogPath      = lazy(() => import("@/pages/paths/AnalogPath"));
-const FPGAPath        = lazy(() => import("@/pages/paths/FPGAPath"));
-const EmbeddedPath    = lazy(() => import("@/pages/paths/EmbeddedPath"));
-const DFTPath         = lazy(() => import("@/pages/paths/DFTPath"));
-const ResearchPath    = lazy(() => import("@/pages/paths/ResearchPath"));
+const AnalogPath         = lazy(() => import("@/pages/paths/AnalogPath"));
+const FPGAPath           = lazy(() => import("@/pages/paths/FPGAPath"));
+const EmbeddedPath       = lazy(() => import("@/pages/paths/EmbeddedPath"));
+const DFTPath            = lazy(() => import("@/pages/paths/DFTPath"));
+const ResearchPath       = lazy(() => import("@/pages/paths/ResearchPath"));
 
 const isAdminRoute   = () => window.location.pathname.startsWith("/admin");
 const isOdysseyRoute = () => window.location.pathname.includes("/odyssey");
@@ -51,8 +50,7 @@ export default function App() {
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       {!hideChrome() && <Navbar />}
       <OdysseyGuard>
-        {/* pt-14 = topbar height, content fills remaining space */}
-        <main className="min-h-screen bg-black pt-14">
+        <main className="min-h-screen bg-black pt-14 cv-main">
           <Suspense fallback={<Spinner />}>
             <Switch>
               <Route path="/"                          component={Landing} />

@@ -168,3 +168,16 @@
   from { transform: scale(0); opacity: 1; }
   to { transform: scale(4); opacity: 0; }
 }
+
+/* Sidebar push layout */
+:root { --sidebar-offset: 0px; }
+
+.cv-main {
+  margin-left: var(--sidebar-offset);
+  transition: margin-left 0.26s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* On mobile, never push content (sidebar overlays) */
+@media (max-width: 639px) {
+  .cv-main { margin-left: 0 !important; }
+}
