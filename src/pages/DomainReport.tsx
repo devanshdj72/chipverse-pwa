@@ -31,13 +31,14 @@ const STORAGE_KEYS: Record<string, string> = {
 };
 
 // ── JSON data files for domains that load sub-levels dynamically ──────────────
+const BASE = import.meta.env.BASE_URL;
 const DOMAIN_JSON_FILES: Record<string, string> = {
-  verification:      '/data/verification-sublevels.json',
-  'physical-design': '/data/physical-design-sublevels.json',
-  analog:            '/data/analog-sublevels.json',
-  fpga:              '/data/fpga-sublevels.json',
-  embedded:          '/data/embedded-sublevels.json',
-  dft:               '/data/dft-sublevels.json',
+  verification:      `${BASE}data/verification-sublevels.json`,
+  'physical-design': `${BASE}data/physical-design-sublevels.json`,
+  analog:            `${BASE}data/analog-sublevels.json`,
+  fpga:              `${BASE}data/fpga-sublevels.json`,
+  embedded:          `${BASE}data/embedded-sublevels.json`,
+  dft:               `${BASE}data/dft-sublevels.json`,
 };
 
 // ── Load the correct sub-level data for a domain ──────────────────────────────
@@ -422,6 +423,42 @@ export default function DomainReport() {
               </div>
             </div>
           </div>
+
+          {/* ── AI Analysis Summary ── */}
+          {data.aiSummary && (
+            <div className="bg-black/40 border border-blue-500/20 rounded-2xl p-6 backdrop-blur-md mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-blue-400 font-bold font-['Orbitron'] text-sm uppercase tracking-wider flex items-center gap-2">
+                  <Brain className="w-4 h-4" /> AI Analysis
+                </h2>
+                {data.aiRating && (
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4" fill={i < data.aiRating ? '#fbbf24' : 'transparent'} stroke={i < data.aiRating ? '#fbbf24' : '#4b5563'} />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed">{data.aiSummary}</p>
+            </div>
+          )}
+
+          {/* ── Next Steps ── */}
+          {data.nextSteps?.length > 0 && (
+            <div className="bg-black/40 border border-purple-500/20 rounded-2xl p-6 backdrop-blur-md mb-6">
+              <h2 className="text-purple-400 font-bold font-['Orbitron'] text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Zap className="w-4 h-4" /> AI Recommended Next Steps
+              </h2>
+              <ol className="space-y-2">
+                {data.nextSteps.map((step: string, i: number) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                    <span className="w-5 h-5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           {/* ── Strengths & Improvements ── */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
