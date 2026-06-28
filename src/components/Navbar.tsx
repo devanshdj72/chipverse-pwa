@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import XPStreakWidget from "@/components/XPStreakWidget";
 import api from "@/lib/api";
 import { useNotifications } from "@/lib/useNotifications";
 import { getSocket } from "@/lib/socket";
@@ -233,11 +234,9 @@ export default function Navbar() {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-2">
-            {/* XP + Streak */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/8 text-xs font-semibold">
-              <span className="text-yellow-400">⚡ {profile?.xp ?? 0}</span>
-              <span className="text-gray-600">·</span>
-              <span className="text-orange-400">🔥 {profile?.streak ?? 0}</span>
+            {/* XP + Streak Widget */}
+            <div className="hidden sm:block">
+              <XPStreakWidget xp={profile?.xp ?? 0} streak={profile?.streak ?? 0} />
             </div>
 
             {/* Messages */}

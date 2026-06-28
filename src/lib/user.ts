@@ -95,6 +95,7 @@ function useUserInternal() {
         try {
           const [meRes, profile] = await Promise.all([api.auth.me(), loadProfile()]);
           setState({ user: meRes.data, profile, isLoading: false, isAuthenticated: true });
+        api.user.updateStreak().catch(() => {}); // Update daily streak
         } catch (e) {
           console.error('[OAuth] me() failed:', e);
           setState(s => ({ ...s, isLoading: false, isAuthenticated: true }));
@@ -112,6 +113,7 @@ function useUserInternal() {
         connectSocket(refreshRes.data.accessToken);
         const [meRes, profile] = await Promise.all([api.auth.me(), loadProfile()]);
         setState({ user: meRes.data, profile, isLoading: false, isAuthenticated: true });
+        api.user.updateStreak().catch(() => {}); // Update daily streak
       } catch {
         clearRefreshToken();
         setState((s) => ({ ...s, isLoading: false }));
