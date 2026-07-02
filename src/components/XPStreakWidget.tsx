@@ -37,6 +37,7 @@ function timeAgo(ts: number) {
 export default function XPStreakWidget({ xp, streak }: { xp: number; streak: number }) {
   const now = new Date();
   const [open, setOpen]       = useState<"xp" | "streak" | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [history, setHistory] = useState<XPEntry[]>([]);
   const [activity, setActivity] = useState<Record<string, number>>({});
   const [calYear,  setCalYear]  = useState(now.getFullYear());
@@ -67,6 +68,19 @@ export default function XPStreakWidget({ xp, streak }: { xp: number; streak: num
 
   const toggle = (p: "xp" | "streak") => setOpen((o) => (o === p ? null : p));
 
+  const handleMouseEnter = (p: "xp" | "streak") => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    setOpen(p);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimer.current = setTimeout(() => setOpen(null), 300);
+  };
+
+  const handleDropdownEnter = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  };
+
   const prevMonth = () => {
     if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
     else setCalMonth(m => m - 1);
@@ -92,7 +106,11 @@ export default function XPStreakWidget({ xp, streak }: { xp: number; streak: num
     <div ref={ref} style={{ position: "relative", display: "flex", gap: "6px", alignItems: "center" }}>
 
       {/* XP Pill */}
-      <button onClick={() => toggle("xp")} style={{
+      <button
+        onMouseEnter={() => handleMouseEnter("xp")}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => toggle("xp")}
+        style={{
         display: "flex", alignItems: "center", gap: "5px",
         background: open === "xp" ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
         border: `1px solid ${open === "xp" ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.12)"}`,
@@ -104,7 +122,11 @@ export default function XPStreakWidget({ xp, streak }: { xp: number; streak: num
       </button>
 
       {/* Streak Pill */}
-      <button onClick={() => toggle("streak")} style={{
+      <button
+        onMouseEnter={() => handleMouseEnter("streak")}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => toggle("streak")}
+        style={{
         display: "flex", alignItems: "center", gap: "5px",
         background: open === "streak" ? "rgba(251,146,60,0.2)" : "rgba(255,255,255,0.06)",
         border: `1px solid ${open === "streak" ? "rgba(251,146,60,0.5)" : "rgba(255,255,255,0.12)"}`,
@@ -117,7 +139,7 @@ export default function XPStreakWidget({ xp, streak }: { xp: number; streak: num
 
       {/* ── XP Dropdown ── */}
       {open === "xp" && (
-        <div style={{
+        <div onMouseEnter={handleDropdownEnter} onMouseLeave={handleMouseLeave} style={{
           position: "absolute", top: "calc(100% + 10px)", right: 0, width: "300px",
           background: "rgba(8,8,20,0.98)", border: "1px solid rgba(99,102,241,0.3)",
           borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", zIndex: 9999, overflow: "hidden",
@@ -163,7 +185,7 @@ export default function XPStreakWidget({ xp, streak }: { xp: number; streak: num
 
       {/* ── Streak Calendar Dropdown (monthly) ── */}
       {open === "streak" && (
-        <div style={{
+        <div onMouseEnter={handleDropdownEnter} onMouseLeave={handleMouseLeave} style={{
           position: "absolute", top: "calc(100% + 10px)", right: 0, width: "300px",
           background: "rgba(8,8,20,0.98)", border: "1px solid rgba(251,146,60,0.3)",
           borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.8)", zIndex: 9999, overflow: "hidden",
