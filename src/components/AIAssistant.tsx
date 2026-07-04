@@ -289,52 +289,65 @@ export default function AIAssistant() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/chipbot/chat`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...newMessages.map(m => ({ role: m.role, content: m.content })),
-          ],
-        }),
-      });
+      // Try backend first, fall back to direct Groq if backend fails
+      const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY;
+      let reply = "";
 
-      const data = await res.json();
+      const tryBackend = async () => {
+        const res = await fetch(`${API_BASE}/api/chipbot/chat`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              ...newMessages.map(m => ({ role: m.role, content: m.content })),
+            ],
+          }),
+        });
+        if (!res.ok) throw new Error(`Backend ${res.status}`);
+        const data = await res.json();
+        if (data.credits) setCredits(data.credits);
+        return data.reply;
+      };
 
-      if (data.credits) setCredits(data.credits);
+      const tryGroqDirect = async () => {
+        if (!GROQ_KEY) throw new Error("No Groq key");
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
+          body: JSON.stringify({
+            model: "llama3-8b-8192",
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              ...newMessages.map(m => ({ role: m.role, content: m.content })),
+            ],
+            max_tokens: 1024,
+            temperature: 0.7,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(`Groq ${res.status}: ${err}`);
+        }
+        const data = await res.json();
+        // Deduct credit locally
+        setCredits(prev => ({ ...prev, used: (prev?.used ?? 0) + 1 }));
+        return data.choices?.[0]?.message?.content ?? "No response";
+      };
 
-      if (res.status === 429 && data.error === 'NO_CREDITS') {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: "❌ **No credits left!** You've used all your daily ChipBot credits. They reset at **midnight UTC**. Come back tomorrow! 🌙",
-        }]);
-        return;
+      try {
+        reply = await tryBackend();
+      } catch {
+        reply = await tryGroqDirect();
       }
 
-      if (res.status === 503 && data.error === 'GROQ_BUSY') {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: "⏳ **AI is busy right now.** Your credit was **not used** — please try again in a few seconds!",
-        }]);
-        return;
-      }
-
-      if (!res.ok) {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: "Sorry, something went wrong. Your credit was not used — please try again.",
-        }]);
-        return;
-      }
-
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
       if (!open) setHasNewMessage(true);
 
-    } catch {
+    } catch (e: any) {
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "Sorry, I'm having trouble connecting right now. Please check your internet connection and try again.",
+        content: "Sorry, I'm having trouble connecting. Please try again in a moment.",
       }]);
     } finally {
       setLoading(false);
