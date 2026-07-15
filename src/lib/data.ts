@@ -19,6 +19,7 @@ export const ROADMAPS: Record<DomainId, Level[]> = {
   rtl: [
     { id: 0, level:0, title:"Semiconductor Foundations", difficulty:"Beginner", xp:50, hours:2, position:"center", topics:["What is VLSI","ASIC vs FPGA","Frontend vs Backend","Chip Design Flow","Moore's Law"], lab:"Match design flow stages", labType:"quiz" },
     { id: 1, level:1, title:"Digital Logic Mastery", difficulty:"Beginner", xp:80, hours:4, position:"right", topics:["Number systems","Boolean algebra","Logic gates","K-Maps","Combinational circuits","Sequential circuits"], lab:"Full Adder + Multiplexer", labType:"simulation" },
+    { id: 13, level:13, title:"Digital Electronics Lab", difficulty:"Beginner", xp:230, hours:8, position:"left", topics:["Combinational circuits","Half/Full Adder","MUX/DEMUX","Encoders/Decoders","Flip-Flops","Counters","Shift Registers","FSM Design"], lab:"Design adders, counters, FSMs in Verilog", labType:"coding", badge:"Digital Circuit Designer" },
     { id: 2, level:2, title:"Verilog Basics", difficulty:"Beginner+", xp:120, hours:6, position:"center", topics:["module","wire/reg","assign","always block","operators","basic testbench"], lab:"4-bit Adder + Comparator + ALU", labType:"coding" },
     { id: 3, level:3, title:"Advanced Verilog", difficulty:"Intermediate", xp:150, hours:7, position:"left", topics:["FSM","Parameterized modules","Counters","Shift registers","Memories","Generate blocks"], lab:"UART TX + Traffic Light FSM", labType:"project" },
     { id: 4, level:4, title:"SystemVerilog Essentials", difficulty:"Intermediate", xp:160, hours:5, position:"center", topics:["logic","always_ff","always_comb","enums","structs","interfaces"], lab:"Convert Verilog to SystemVerilog", labType:"coding" },
@@ -1565,6 +1566,631 @@ endmodule`,
       },
     ],
   },
+
+
+  // ── Level 1.5: Digital Electronics Lab ────────────────────────────────────────
+  {
+    levelId: 13,
+    bonusXp: 180,
+    badge: "Digital Circuit Designer",
+    subLevels: [
+      {
+        id: "rtl-13-concept", type: "concept", title: "Concept", icon: "📚",
+        summary: "Complete digital electronics — combinational and sequential circuits.",
+        xp: 40,
+        keyPoints: [
+          "Combinational circuits: output depends ONLY on current inputs — no memory",
+          "Sequential circuits: output depends on inputs AND past state — has memory",
+          "Building blocks: gates → half adder → full adder → ALU → flip-flops → counters → state machines",
+          "Every processor, memory, and FPGA is built from these fundamental circuits",
+          "RTL design = describing these circuits in Verilog/VHDL for synthesis",
+        ],
+        deepDive: `# Complete Digital Electronics for RTL Design
+
+## Combinational Circuits
+
+### Basic Gates
+All digital logic starts with NAND, NOR, NOT, AND, OR, XOR. Every other circuit is built from these.
+
+### Multiplexers (MUX)
+Selects one of N inputs based on select lines.
+- 2:1 MUX → 1 select bit
+- 4:1 MUX → 2 select bits  
+- 8:1 MUX → 3 select bits
+Used everywhere: data routing, function implementation, ALU input selection.
+
+### Demultiplexers (DEMUX)
+Opposite of MUX — routes one input to one of N outputs.
+
+### Encoders & Decoders
+- **Encoder**: N inputs → log₂(N) bit binary code (priority encoders critical for interrupts)
+- **Decoder**: N-bit binary → 2^N one-hot outputs (memory address decoding)
+
+### Adders
+- **Half Adder**: A+B → Sum, Carry (no carry-in)
+- **Full Adder**: A+B+Cin → Sum, Cout
+- **Ripple Carry Adder**: chain of full adders (slow but simple)
+- **Carry Lookahead Adder (CLA)**: parallel carry computation (fast)
+- **Carry Save Adder (CSA)**: used in multipliers
+
+### Comparators, Multipliers, ALUs
+- Comparators: EQ, GT, LT flags
+- Array multiplier, Booth multiplier
+- ALU: combine adder + logic operations with opcode select
+
+## Sequential Circuits
+
+### Latches (Level-triggered)
+- **SR Latch**: Set-Reset (forbidden state: S=R=1)
+- **D Latch**: transparent when enable=1
+
+### Flip-Flops (Edge-triggered) ← CRITICAL for RTL
+- **D Flip-Flop**: captures D on clock edge. Foundation of ALL synchronous design
+- **JK Flip-Flop**: J=set, K=reset, J=K=1 → toggle
+- **T Flip-Flop**: toggles on clock when T=1 (used in counters)
+
+### Registers
+- **PISO** (Parallel In Serial Out): load parallel, shift out serially
+- **SIPO** (Serial In Parallel Out): shift in serially, read parallel
+- **PIPO** (Parallel In Parallel Out): simple register file
+- **SISO** (Serial In Serial Out): delay line
+
+### Counters
+- **Ripple (Async) Counter**: simple but has propagation delay glitches
+- **Synchronous Counter**: all FFs clock together — no glitches
+- **Up/Down Counter**: direction control input
+- **Johnson Counter**: N FFs → 2N states (used in timing generators)
+- **Ring Counter**: one-hot, single 1 circulates
+- **BCD Counter**: counts 0-9 then resets
+
+### Finite State Machines (FSMs)
+- **Mealy**: output depends on state AND inputs (faster response)
+- **Moore**: output depends only on state (cleaner, preferred in RTL)
+- State encoding: binary, one-hot, gray code
+        `,
+      },
+      {
+        id: "rtl-13-lab1", type: "lab", title: "Lab 1: Combinational", icon: "⚗️",
+        summary: "Design adders, MUX, decoders, and comparators in Verilog.",
+        xp: 60,
+        lab: {
+          editorLanguage: "verilog",
+          instructions: `# Lab 1: Complete Combinational Circuit Design
+
+Design ALL of the following circuits in Verilog:
+
+## Part A: Half Adder
+- Inputs: a, b
+- Outputs: sum, carry
+
+## Part B: Full Adder  
+- Inputs: a, b, cin
+- Outputs: sum, cout
+
+## Part C: 4-bit Ripple Carry Adder
+- Inputs: a[3:0], b[3:0], cin
+- Outputs: sum[3:0], cout
+- Use 4 full adder instances
+
+## Part D: 4:1 Multiplexer
+- Inputs: d[3:0], sel[1:0]
+- Output: y
+
+## Part E: 2:4 Decoder
+- Inputs: a[1:0], en
+- Outputs: y[3:0]
+
+## Part F: 4-bit Magnitude Comparator
+- Inputs: a[3:0], b[3:0]
+- Outputs: eq, gt, lt
+
+Combine all in one file using separate modules.`,
+          starterCode: `// =============================================
+// Complete Combinational Circuit Lab
+// =============================================
+
+// ── Part A: Half Adder ──────────────────────
+module half_adder(
+  input  a, b,
+  output sum, carry
+);
+  // TODO: implement using XOR and AND
+  assign sum   = ;
+  assign carry = ;
+endmodule
+
+// ── Part B: Full Adder ──────────────────────
+module full_adder(
+  input  a, b, cin,
+  output sum, cout
+);
+  wire s1, c1, c2;
+  // TODO: use two half adders
+  half_adder ha1(.a(a), .b(b), .sum(s1), .carry(c1));
+  half_adder ha2(.a(s1), .b(cin), .sum(sum), .carry(c2));
+  assign cout = ;
+endmodule
+
+// ── Part C: 4-bit Ripple Carry Adder ────────
+module ripple_adder_4bit(
+  input  [3:0] a, b,
+  input  cin,
+  output [3:0] sum,
+  output cout
+);
+  wire c1, c2, c3;
+  // TODO: instantiate 4 full adders
+  full_adder fa0(.a(a[0]), .b(b[0]), .cin(cin),  .sum(sum[0]), .cout(c1));
+  full_adder fa1();  // fill in
+  full_adder fa2();  // fill in
+  full_adder fa3();  // fill in
+endmodule
+
+// ── Part D: 4:1 MUX ─────────────────────────
+module mux4to1(
+  input  [3:0] d,
+  input  [1:0] sel,
+  output reg y
+);
+  always @(*) begin
+    case(sel)
+      // TODO: implement all 4 cases
+      2'b00: y = d[0];
+      default: y = 1'b0;
+    endcase
+  end
+endmodule
+
+// ── Part E: 2:4 Decoder ──────────────────────
+module decoder_2to4(
+  input  [1:0] a,
+  input  en,
+  output reg [3:0] y
+);
+  always @(*) begin
+    if (!en) y = 4'b0000;
+    else case(a)
+      // TODO: implement all 4 cases
+      2'b00: y = 4'b0001;
+      default: y = 4'b0000;
+    endcase
+  end
+endmodule
+
+// ── Part F: 4-bit Comparator ─────────────────
+module comparator_4bit(
+  input  [3:0] a, b,
+  output eq, gt, lt
+);
+  // TODO: implement
+  assign eq = ;
+  assign gt = ;
+  assign lt = ;
+endmodule`,
+          solution: `module half_adder(input a,b, output sum,carry);
+  assign sum=a^b; assign carry=a&b;
+endmodule
+
+module full_adder(input a,b,cin, output sum,cout);
+  wire s1,c1,c2;
+  half_adder ha1(.a(a),.b(b),.sum(s1),.carry(c1));
+  half_adder ha2(.a(s1),.b(cin),.sum(sum),.carry(c2));
+  assign cout=c1|c2;
+endmodule
+
+module ripple_adder_4bit(input [3:0] a,b, input cin, output [3:0] sum, output cout);
+  wire c1,c2,c3;
+  full_adder fa0(.a(a[0]),.b(b[0]),.cin(cin),.sum(sum[0]),.cout(c1));
+  full_adder fa1(.a(a[1]),.b(b[1]),.cin(c1),.sum(sum[1]),.cout(c2));
+  full_adder fa2(.a(a[2]),.b(b[2]),.cin(c2),.sum(sum[2]),.cout(c3));
+  full_adder fa3(.a(a[3]),.b(b[3]),.cin(c3),.sum(sum[3]),.cout(cout));
+endmodule
+
+module mux4to1(input [3:0] d, input [1:0] sel, output reg y);
+  always @(*) case(sel)
+    2'b00:y=d[0]; 2'b01:y=d[1]; 2'b10:y=d[2]; 2'b11:y=d[3];
+  endcase
+endmodule
+
+module decoder_2to4(input [1:0] a, input en, output reg [3:0] y);
+  always @(*) begin
+    if(!en) y=4'b0000;
+    else case(a)
+      2'b00:y=4'b0001; 2'b01:y=4'b0010;
+      2'b10:y=4'b0100; 2'b11:y=4'b1000;
+    endcase
+  end
+endmodule
+
+module comparator_4bit(input [3:0] a,b, output eq,gt,lt);
+  assign eq=(a==b); assign gt=(a>b); assign lt=(a<b);
+endmodule`,
+          hints: ["Half adder: sum = a XOR b, carry = a AND b", "Full adder: use two half adders, cout = OR of both carries", "Ripple adder: carry out of each FA feeds into next FA cin", "Comparator: use == > < operators directly in Verilog"],
+          testCases: [
+            { input: "a=1,b=1", expected: "half_adder: sum=0,carry=1" },
+            { input: "a=1,b=1,cin=1", expected: "full_adder: sum=1,cout=1" },
+            { input: "a=4'b1010,b=4'b0101,cin=0", expected: "ripple: sum=4'b1111,cout=0" },
+            { input: "d=4'b1010,sel=2'b10", expected: "mux: y=1" },
+            { input: "a=2'b10,en=1", expected: "decoder: y=4'b0100" },
+            { input: "a=4'b1010,b=4'b0101", expected: "comparator: eq=0,gt=1,lt=0" },
+          ],
+        },
+      },
+      {
+        id: "rtl-13-lab2", type: "lab", title: "Lab 2: Sequential", icon: "⚗️",
+        summary: "Design flip-flops, registers, and counters in Verilog.",
+        xp: 60,
+        lab: {
+          editorLanguage: "verilog",
+          instructions: `# Lab 2: Sequential Circuit Design
+
+## Part A: D Flip-Flop (with async reset)
+- Inputs: clk, rst_n, d
+- Output: q
+
+## Part B: 8-bit Shift Register (PISO)
+- Inputs: clk, rst_n, load, d[7:0], sin
+- Output: sout, q[7:0]
+
+## Part C: 4-bit Synchronous Up Counter
+- Inputs: clk, rst_n, en
+- Output: count[3:0]
+
+## Part D: 4-bit Up/Down Counter
+- Inputs: clk, rst_n, en, up_down
+- Output: count[3:0]
+
+## Part E: BCD Counter (0 to 9)
+- Inputs: clk, rst_n, en
+- Outputs: count[3:0], tc (terminal count — pulses when reaches 9)
+
+## Part F: 3-bit Johnson Counter
+- Input: clk, rst_n
+- Output: q[2:0]`,
+          starterCode: `// ── Part A: D Flip-Flop ─────────────────────
+module d_ff(
+  input  clk, rst_n, d,
+  output reg q
+);
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) q <= 1'b0;
+    else        q <= ; // TODO
+  end
+endmodule
+
+// ── Part B: 8-bit PISO Shift Register ───────
+module shift_reg_piso(
+  input        clk, rst_n, load, sin,
+  input  [7:0] d,
+  output       sout,
+  output [7:0] q
+);
+  reg [7:0] data;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)     data <= 8'b0;
+    else if (load)  data <= d;         // parallel load
+    else            data <= ; // TODO: shift right, sin enters MSB
+  end
+  assign q    = data;
+  assign sout = data[0]; // LSB shifts out
+endmodule
+
+// ── Part C: 4-bit Up Counter ─────────────────
+module counter_up(
+  input        clk, rst_n, en,
+  output reg [3:0] count
+);
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)    count <= 4'b0;
+    else if (en)   count <= ; // TODO: increment
+  end
+endmodule
+
+// ── Part D: Up/Down Counter ───────────────────
+module counter_updown(
+  input        clk, rst_n, en, up_down,
+  output reg [3:0] count
+);
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) count <= 4'b0;
+    else if (en) begin
+      if (up_down) count <= count + 1;
+      else         count <= ; // TODO
+    end
+  end
+endmodule
+
+// ── Part E: BCD Counter ───────────────────────
+module bcd_counter(
+  input        clk, rst_n, en,
+  output reg [3:0] count,
+  output       tc
+);
+  assign tc = (count == 4'd9) & en;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)         count <= 4'b0;
+    else if (en) begin
+      if (count == 4'd9) count <= 4'b0;  // reset at 9
+      else               count <= ; // TODO
+    end
+  end
+endmodule
+
+// ── Part F: Johnson Counter ────────────────────
+module johnson_counter(
+  input        clk, rst_n,
+  output reg [2:0] q
+);
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) q <= 3'b0;
+    else        q <= ; // TODO: {~q[0], q[2:1]}
+  end
+endmodule`,
+          solution: `module d_ff(input clk,rst_n,d, output reg q);
+  always @(posedge clk or negedge rst_n)
+    if(!rst_n) q<=0; else q<=d;
+endmodule
+
+module shift_reg_piso(input clk,rst_n,load,sin, input [7:0] d, output sout, output [7:0] q);
+  reg [7:0] data;
+  always @(posedge clk or negedge rst_n)
+    if(!rst_n) data<=0;
+    else if(load) data<=d;
+    else data<={sin,data[7:1]};
+  assign q=data; assign sout=data[0];
+endmodule
+
+module counter_up(input clk,rst_n,en, output reg [3:0] count);
+  always @(posedge clk or negedge rst_n)
+    if(!rst_n) count<=0; else if(en) count<=count+1;
+endmodule
+
+module counter_updown(input clk,rst_n,en,up_down, output reg [3:0] count);
+  always @(posedge clk or negedge rst_n)
+    if(!rst_n) count<=0;
+    else if(en) count<= up_down ? count+1 : count-1;
+endmodule
+
+module bcd_counter(input clk,rst_n,en, output reg [3:0] count, output tc);
+  assign tc=(count==9)&en;
+  always @(posedge clk or negedge rst_n)
+    if(!rst_n) count<=0;
+    else if(en) count<=(count==9)?0:count+1;
+endmodule
+
+module johnson_counter(input clk,rst_n, output reg [2:0] q);
+  always @(posedge clk or negedge rst_n)
+    if(!rst_n) q<=0; else q<={~q[0],q[2:1]};
+endmodule`,
+          hints: ["D FF: just assign d to q on clock edge", "PISO shift: {sin, data[7:1]} shifts right, sin fills MSB", "Up counter: count <= count + 1", "BCD: reset to 0 when count reaches 9", "Johnson: feedback is complement of LSB into MSB"],
+          testCases: [
+            { input: "clk posedge, d=1, rst_n=1", expected: "d_ff: q=1" },
+            { input: "load=1, d=8'b10110100", expected: "shift_reg: q=10110100" },
+            { input: "en=1, 5 clocks", expected: "counter_up: count=5" },
+            { input: "up_down=0, count=3, en=1", expected: "counter_updown: count=2" },
+            { input: "en=1, 10 clocks", expected: "bcd: count cycles 0-9" },
+            { input: "4 clocks from reset", expected: "johnson: 000→100→110→111→011" },
+          ],
+        },
+      },
+      {
+        id: "rtl-13-lab3", type: "lab", title: "Lab 3: FSM Design", icon: "⚗️",
+        summary: "Design Mealy and Moore finite state machines.",
+        xp: 70,
+        lab: {
+          editorLanguage: "verilog",
+          instructions: `# Lab 3: Finite State Machine Design
+
+## Part A: Moore FSM — Sequence Detector (101)
+Detect the sequence "101" in a serial bit stream.
+- Inputs: clk, rst_n, in
+- Output: detected (1 when "101" detected)
+- Use Moore model (output depends only on state)
+
+## Part B: Mealy FSM — Overlapping Sequence Detector (1011)  
+Detect "1011" with overlap allowed.
+- Inputs: clk, rst_n, in
+- Output: detected
+- Use Mealy model (output depends on state AND input)
+
+## Part C: Traffic Light Controller
+Moore FSM with 4 states:
+- GREEN (30 cycles) → YELLOW (5 cycles) → RED (30 cycles) → RED_YELLOW (5 cycles) → back
+- Inputs: clk, rst_n
+- Outputs: red, yellow, green`,
+          starterCode: `// ── Part A: Moore FSM — 101 Sequence Detector ──
+module seq_det_101_moore(
+  input  clk, rst_n, in,
+  output detected
+);
+  // States: S0=init, S1=got1, S2=got10, S3=got101
+  reg [1:0] state, next;
+  
+  // State encoding
+  localparam S0=2'd0, S1=2'd1, S2=2'd2, S3=2'd3;
+  
+  // State register
+  always @(posedge clk or negedge rst_n)
+    if (!rst_n) state <= S0;
+    else        state <= next;
+  
+  // Next state logic
+  always @(*) begin
+    case(state)
+      S0: next = in ? S1 : S0;
+      S1: next = in ? S1 : S2;
+      S2: next = in ? S3 : S0; // TODO: what if in=0?
+      S3: next = in ? S1 : S0; // detected! go back
+      default: next = S0;
+    endcase
+  end
+  
+  // Output logic (Moore — only depends on state)
+  assign detected = (state == S3);
+endmodule
+
+// ── Part B: Traffic Light Controller ─────────
+module traffic_light(
+  input  clk, rst_n,
+  output reg red, yellow, green
+);
+  // States
+  localparam GREEN=2'd0, YELLOW=2'd1, RED=2'd2, RED_YELLOW=2'd3;
+  
+  reg [1:0] state;
+  reg [5:0] timer; // counts cycles in each state
+  
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      state <= GREEN;
+      timer <= 6'd0;
+    end else begin
+      timer <= timer + 1;
+      case(state)
+        GREEN: begin
+          if (timer == 6'd29) begin
+            state <= YELLOW;
+            timer <= 6'd0;
+          end
+        end
+        YELLOW: begin
+          if (timer == 6'd4) begin
+            state <= ; // TODO
+            timer <= 6'd0;
+          end
+        end
+        RED: begin
+          if (timer == 6'd29) begin
+            state <= ; // TODO
+            timer <= 6'd0;
+          end
+        end
+        RED_YELLOW: begin
+          if (timer == 6'd4) begin
+            state <= ; // TODO
+            timer <= 6'd0;
+          end
+        end
+      endcase
+    end
+  end
+  
+  // Output logic
+  always @(*) begin
+    red=0; yellow=0; green=0;
+    case(state)
+      GREEN:     green  = 1;
+      YELLOW:    yellow = 1;
+      RED:       red    = 1;
+      RED_YELLOW: begin red=1; yellow=1; end
+    endcase
+  end
+endmodule`,
+          solution: `module seq_det_101_moore(input clk,rst_n,in, output detected);
+  reg [1:0] state,next;
+  localparam S0=0,S1=1,S2=2,S3=3;
+  always @(posedge clk or negedge rst_n) if(!rst_n) state<=S0; else state<=next;
+  always @(*) case(state)
+    S0: next=in?S1:S0;
+    S1: next=in?S1:S2;
+    S2: next=in?S3:S0;
+    S3: next=in?S1:S2;
+    default: next=S0;
+  endcase
+  assign detected=(state==S3);
+endmodule
+
+module traffic_light(input clk,rst_n, output reg red,yellow,green);
+  localparam GREEN=0,YELLOW=1,RED=2,RED_YELLOW=3;
+  reg [1:0] state; reg [5:0] timer;
+  always @(posedge clk or negedge rst_n) begin
+    if(!rst_n) begin state<=GREEN; timer<=0; end
+    else begin
+      timer<=timer+1;
+      case(state)
+        GREEN:     if(timer==29) begin state<=YELLOW;    timer<=0; end
+        YELLOW:    if(timer==4)  begin state<=RED;       timer<=0; end
+        RED:       if(timer==29) begin state<=RED_YELLOW;timer<=0; end
+        RED_YELLOW:if(timer==4)  begin state<=GREEN;     timer<=0; end
+      endcase
+    end
+  end
+  always @(*) begin
+    red=0;yellow=0;green=0;
+    case(state)
+      GREEN:green=1; YELLOW:yellow=1; RED:red=1;
+      RED_YELLOW:begin red=1;yellow=1;end
+    endcase
+  end
+endmodule`,
+          hints: ["FSM: always separate state register (sequential) from next-state logic (combinational)", "Moore: output = f(state) only", "Mealy: output = f(state, input)", "Timer FSM: use a counter in each state to control dwell time"],
+          testCases: [
+            { input: "sequence: 1,0,1", expected: "seq_det_101: detected=1 on 3rd bit" },
+            { input: "sequence: 1,1,0,1", expected: "seq_det_101: detected=1 on last bit" },
+            { input: "30 clocks", expected: "traffic: GREEN for 30 cycles then YELLOW" },
+            { input: "35 clocks", expected: "traffic: YELLOW for 5 cycles then RED" },
+          ],
+        },
+      },
+      {
+        id: "rtl-13-quiz", type: "quiz", title: "Quiz", icon: "🎯",
+        summary: "Test your digital electronics knowledge.",
+        xp: 50,
+        quiz: {
+          questions: [
+            {
+              q: "What is the key difference between combinational and sequential circuits?",
+              options: ["Combinational uses clock, sequential doesn't", "Sequential circuits have memory/state, combinational don't", "Combinational is faster than sequential", "Sequential uses only NAND gates"],
+              answer: 1,
+              explanation: "Sequential circuits store state in flip-flops and their output depends on both current inputs AND past history. Combinational circuits are purely functional — output = f(inputs) only."
+            },
+            {
+              q: "In a 4-bit ripple carry adder, what is the main disadvantage?",
+              options: ["It uses too many gates", "Carry propagation causes delay — slower for wide adders", "It cannot add negative numbers", "It requires a clock signal"],
+              answer: 1,
+              explanation: "In a ripple carry adder, each full adder must wait for the carry from the previous stage. For N-bit addition, worst-case delay = N × (FA delay). This is why Carry Lookahead Adders (CLA) are preferred in fast designs."
+            },
+            {
+              q: "Which flip-flop type is most commonly used in synchronous RTL design?",
+              options: ["SR Flip-Flop", "JK Flip-Flop", "D Flip-Flop", "T Flip-Flop"],
+              answer: 2,
+              explanation: "The D (Data) Flip-Flop is the standard building block of synchronous digital design. It captures the value of D on the active clock edge. SR has a forbidden state, JK is complex, T is mainly used for counters."
+            },
+            {
+              q: "A Johnson counter with 3 flip-flops has how many unique states?",
+              options: ["3", "6", "8", "4"],
+              answer: 1,
+              explanation: "A Johnson counter (twisted ring counter) with N flip-flops has 2N unique states. With 3 FFs: 6 states. The sequence: 000→100→110→111→011→001→000. It's used in timing and frequency division."
+            },
+            {
+              q: "In a Moore FSM, the output depends on:",
+              options: ["Current inputs only", "Current state AND inputs", "Current state only", "Previous inputs only"],
+              answer: 2,
+              explanation: "Moore FSM: output = f(state). Mealy FSM: output = f(state, input). Moore machines are preferred in RTL because outputs are glitch-free and synchronous — they only change on clock edges when state changes."
+            },
+            {
+              q: "What does a 4:1 MUX with sel=2'b10 do?",
+              options: ["Selects input d[0]", "Selects input d[1]", "Selects input d[2]", "Selects input d[3]"],
+              answer: 2,
+              explanation: "A 4:1 MUX routes one of 4 inputs to output based on 2-bit select. sel=00→d[0], sel=01→d[1], sel=10→d[2], sel=11→d[3]. Binary 10 = decimal 2, so d[2] is selected."
+            },
+            {
+              q: "Which Verilog construct correctly models a synchronous reset D flip-flop?",
+              options: [
+                "always @(posedge clk) if(!rst) q<=0; else q<=d;",
+                "always @(posedge clk or negedge rst) if(!rst) q<=0; else q<=d;",
+                "always @(*) if(!rst) q=0; else q=d;",
+                "assign q = rst ? d : 0;"
+              ],
+              answer: 0,
+              explanation: "Synchronous reset: only posedge clk in sensitivity list, reset checked inside the always block. Asynchronous reset: rst in sensitivity list (always @(posedge clk or negedge rst)). Synchronous reset is generally preferred in FPGA and ASIC design."
+            },
+          ],
+        },
+      },
+    ],
+  },
+
 
   // ── Level 2: Verilog Basics ──────────────────────────────────────────────────
   {
@@ -3336,7 +3962,7 @@ endmodule`,
     badge: "RTL Architect",
     subLevels: [
       {
-        id: "rtl-12-concept", type: "concept", title: "Concept", icon: "📚",
+        id: "rtl-13-concept", type: "concept", title: "Concept", icon: "📚",
         summary: "Complete RISC-V datapath architecture — the final challenge.",
         keyPoints: [
           "RISC-V is an open-source ISA (Instruction Set Architecture)",
@@ -3498,7 +4124,7 @@ endmodule`,
         },
       },
       {
-        id: "rtl-12-quiz", type: "quiz", title: "Quiz", icon: "🧠",
+        id: "rtl-13-quiz", type: "quiz", title: "Quiz", icon: "🧠",
         summary: "Final boss quiz — RISC-V and advanced RTL.",
         xp: 30,
         quiz: [
